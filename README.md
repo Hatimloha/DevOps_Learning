@@ -5,7 +5,7 @@ Every day I study, build, and document what I learn — right here on this repo.
 
 No polished tutorials. Just real learning, real mistakes, and real progress.
 
-> 🔗 **Daily blogs on Hashnode** → *(add your link)*  
+> 🔗 **Daily blogs on Hashnode** → [](https://hashnode.com/@hatimloha)
 > 💼 **LinkedIn updates** → *(add your link)*
 
 ---
