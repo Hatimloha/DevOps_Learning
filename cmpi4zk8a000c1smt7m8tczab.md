@@ -5,6 +5,7 @@ seoDescription: "Learn why Docker was created and what problems it solves in mod
 datePublished: 2026-05-23T09:18:57.326Z
 cuid: cmpi4zk8a000c1smt7m8tczab
 slug: lesson-1-why-docker-exists-before-docker-developers-had-a-huge-problem
+cover: https://cdn.hashnode.com/uploads/covers/6a006c83e3eebc2e206dbe24/6cc9bdff-c22c-47f7-9a12-fd015a64f92a.jpg
 ogImage: https://cdn.hashnode.com/uploads/og-images/6a006c83e3eebc2e206dbe24/fa43c2b9-99cd-418c-978a-c48abea00838.jpg
 tags: linux, docker, backend, cloud-computing, devops, containers, virtualization, dockerfile, docker-images, dockerhub, docker-container, docker-network
 
