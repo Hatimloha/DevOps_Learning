@@ -262,54 +262,67 @@ docker-compose up --scale <service-name>=3
 # Note: If container is expose scale will not work in compose
 ```
 
-##
+## Remove Everything
 ```yml
+docker-compose down -v
+```
+Removes:
+- containers
+- networks
+- anonymous volumes
 
+## Important Production Practice
+Never hardcode secrets in compose files.
+
+Bad:
+```yml
+MYSQL_PASSWORD: mypassword
+```
+Use:
+- .env
+- secret managers
+- vault systems
+
+## .env File
+Example
+```yml
+DB_PASSWORD=root
+PORT=3000
+```
+Compose auto-loads it.
+```yml
+environment:
+  DB_PASSWORD: ${DB_PASSWORD}
 ```
 
-##
-```yml
+## Common Compose Workflow
 
+Development:
+```yml
+docker compose up
 ```
 
-##
+Stop:
 ```yml
-
+docker compose down
+```
+Rebuild:
+```yml
+docker compose up --build
 ```
 
-##
+## Important Mental Model
+- Dockerfile = how to build one container
+- Compose = how containers work together
+
+## Real Full Stack Architecture
 ```yml
-
+Frontend
+   ↓
+Backend API
+   ↓
+Redis Cache
+   ↓
+PostgreSQL
 ```
-
-##
-```yml
-
-```
-
-##
-```yml
-
-```
-
-##
-```yml
-
-```
-
-##
-```yml
-
-```
-
-##
-```yml
-
-```
-
-##
-```yml
-
-```
-
-
+> Compose manages all together.
