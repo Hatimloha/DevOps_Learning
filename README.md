@@ -24,9 +24,9 @@ No polished tutorials. Just real learning, real mistakes, and real progress.
 
 | # | Topic | Status | Blog |
 |---|-------|--------|------|
-| 01 | 🐧 Linux & Bash Scripting | 🟡 In Progress | [Read →](#) |
+| 01 | 🐧 Linux & Bash Scripting | 🟡 In Progress | [Read →](https://github.com/Hatimloha/DevOps_Learning/tree/main/01_Linux_%26_Shell) |
 | 02 | 🌿 Git & GitHub | ⬜ Up Next | — |
-| 03 | 🐳 Docker | ⬜ Upcoming | — |
+| 03 | 🐳 Docker | 🟡 In Progress | [Read →](https://github.com/Hatimloha/DevOps_Learning/tree/main/02_docker) |
 | 04 | ☁️ AWS Core (EC2, S3, IAM, VPC, ECR, EKS) | ⬜ Upcoming | — |
 | 05 | ⚙️ GitHub Actions (CI/CD) | ⬜ Upcoming | — |
 | 06 | 🔧 Jenkins | ⬜ Upcoming | — |
