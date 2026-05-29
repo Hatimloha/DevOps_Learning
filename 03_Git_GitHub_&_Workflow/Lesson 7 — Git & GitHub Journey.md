@@ -70,8 +70,8 @@ jobs:
   hello:
     runs-on: ubuntu-latest
 
-  steps:
-    - name: Print Message
+    steps:
+      - name: Print Message
       run: echo "GitHub Actions Working!"
 ```
 
