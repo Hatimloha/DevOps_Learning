@@ -1,38 +1,35 @@
-Lesson 9 — Kubernetes Storage (Volumes, PV, PVC, StorageClass)
-
+# Lesson 9 — Kubernetes Storage (Volumes, PV, PVC, StorageClass)
 Till now your apps:
-
-run in Pods
-use ConfigMaps + Secrets
-exposed via Services
+- run in Pods
+- use ConfigMaps + Secrets
+- exposed via Services
 
 But there’s a big issue:
+- 👉 Pods are temporary
+- 👉 Any data inside a Pod is lost when Pod dies
 
-👉 Pods are temporary
-👉 Any data inside a Pod is lost when Pod dies
-
-1. Problem Without Storage
-
+## 1. Problem Without Storage
 Example:
-
+```
 Pod → writes file inside container
 Pod crashes ❌
 New Pod starts → data is gone ❌
+```
+> Because containers are ephemeral
 
-Because containers are ephemeral
-
-2. Kubernetes Storage Solution
-
+## 2. Kubernetes Storage Solution
 Kubernetes gives 3 main concepts:
-
+```
 Volume (Pod-level storage)
 PersistentVolume (cluster storage)
 PersistentVolumeClaim (request storage)
-3. Volumes (Basic Level)
+```
 
+## 3. Volumes (Basic Level)
 A Volume lives as long as the Pod lives.
 
 Example:
+```yml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -49,31 +46,37 @@ spec:
   volumes:
     - name: my-volume
       emptyDir: {}
+```
 What happens:
-Pod starts → volume created
-Pod deleted → volume deleted ❌
+- Pod starts → volume created
+- Pod deleted → volume deleted ❌
 
-👉 Good for temporary data only
+> 👉 Good for temporary data only
 
-4. Types of Volumes
-Type	Use
-emptyDir	Temporary storage
-hostPath	Node local storage
-configMap	Config files
-secret	Sensitive files
-5. Persistent Volume (PV)
+## 4. Types of Volumes
+| Type      | Use                |
+| --------- | ------------------ |
+| emptyDir  | Temporary storage  |
+| hostPath  | Node local storage |
+| configMap | Config files       |
+| secret    | Sensitive files    |
 
+
+## 5. Persistent Volume (PV)
 Now we go real production level.
 
 👉 PV = actual storage in cluster
 
 Examples:
-
+```yml
 AWS EBS
 Azure Disk
 NFS
 Local disk
+```
+
 PV Example
+```
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -88,10 +91,11 @@ spec:
 
   hostPath:
     path: /mnt/data
-6. PersistentVolumeClaim (PVC)
+```
 
+## 6. PersistentVolumeClaim (PVC)
 👉 PVC = request for storage
-
+```
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -104,17 +108,24 @@ spec:
   resources:
     requests:
       storage: 500Mi
-7. PV + PVC Binding
+```
+
+## 7. PV + PVC Binding
+```
 PVC → requests storage
 PV  → provides storage
 Kubernetes → binds them
+```
 
 Example:
-
+```
 PVC: 500Mi
 PV : 1Gi
 → Bound ✔
-8. Using PVC in Pod
+```
+
+## 8. Using PVC in Pod
+```
 apiVersion: v1
 kind: Pod
 metadata:
@@ -132,7 +143,10 @@ spec:
     - name: storage
       persistentVolumeClaim:
         claimName: my-pvc
-9. Storage Flow (VERY IMPORTANT)
+```
+
+## 9. Storage Flow (VERY IMPORTANT)
+```
 App Pod
    ↓
 PVC (request)
@@ -140,20 +154,25 @@ PVC (request)
 PV (actual storage)
    ↓
 Disk (AWS / local / cloud)
-10. StorageClass (Dynamic Storage)
+```
 
+## 10. StorageClass (Dynamic Storage)
 Instead of manually creating PV:
 
 👉 StorageClass creates PV automatically
 
 Example:
+```yml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: fast-storage
 
 provisioner: kubernetes.io/aws-ebs
+```
+
 PVC using StorageClass:
+```yml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -168,54 +187,73 @@ spec:
   resources:
     requests:
       storage: 1Gi
+```
+> 👉 Kubernetes automatically creates PV
 
-👉 Kubernetes automatically creates PV
+## 11. Types of Access Modes
+| Mode          | Meaning                |
+| ------------- | ---------------------- |
+| ReadWriteOnce | Single node read/write |
+| ReadOnlyMany  | Many nodes read only   |
+| ReadWriteMany | Many nodes read/write  |
 
-11. Types of Access Modes
-Mode	Meaning
-ReadWriteOnce	Single node read/write
-ReadOnlyMany	Many nodes read only
-ReadWriteMany	Many nodes read/write
-12. Volume vs PVC vs PV
-Concept	Level	Purpose
-Volume	Pod	Temporary storage
-PV	Cluster	Actual storage
-PVC	User request	Request storage
-13. Real Production Example
+
+## 12. Volume vs PVC vs PV
+| Concept | Level        | Purpose           |
+| ------- | ------------ | ----------------- |
+| Volume  | Pod          | Temporary storage |
+| PV      | Cluster      | Actual storage    |
+| PVC     | User request | Request storage   |
+
+## 13. Real Production Example
+```
 Frontend Pod → stateless
 Backend Pod → stateless
 Database Pod → uses PVC ✔
-14. kubectl Commands
+```
+
+## 14. kubectl Commands
 PV
+```bash
 kubectl get pv
 kubectl describe pv my-pv
+```
+
 PVC
+```bash
 kubectl get pvc
 kubectl describe pvc my-pvc
+```
+
 Pod
+```bash
 kubectl describe pod pvc-pod
-15. Common Mistakes
+```
+
+## 15. Common Mistakes
 ❌ Using emptyDir for database
+```bash
 data lost after pod restart ❌
+```
+
 ❌ PVC not bound
+```bash
 No matching PV → Pending state
-16. Interview Questions
-What is a Volume?
+```
 
-Temporary storage attached to a Pod.
+##  16. Interview Questions
 
-What is PV?
+1. What is a Volume?
+    > Temporary storage attached to a Pod.
 
-Cluster-level storage resource.
+2. What is PV?
+    > Cluster-level storage resource.
 
-What is PVC?
+3. What is PVC?
+    > Request for storage by user.
 
-Request for storage by user.
+4. Why do we need PVC?
+    > To decouple storage from infrastructure.
 
-Why do we need PVC?
-
-To decouple storage from infrastructure.
-
-What happens if PV is deleted?
-
-PVC becomes unbound.
+5. What happens if PV is deleted?
+    > PVC becomes unbound.

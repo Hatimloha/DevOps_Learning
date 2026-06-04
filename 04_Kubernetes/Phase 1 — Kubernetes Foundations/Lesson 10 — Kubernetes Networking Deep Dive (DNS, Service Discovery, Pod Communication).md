@@ -1,94 +1,98 @@
-Lesson 10 — Kubernetes Networking Deep Dive (DNS, Service Discovery, Pod Communication)
-
+# Lesson 10 — Kubernetes Networking Deep Dive (DNS, Service Discovery, Pod Communication)
 Networking is one of the most important Kubernetes topics.
 
-A common interview question:
-
+## A common interview question:
 "How does Pod A talk to Pod B in Kubernetes?"
+> After this lesson, you'll understand the complete networking flow.
 
-After this lesson, you'll understand the complete networking flow.
-
-1. Kubernetes Networking Goals
-
+## 1. Kubernetes Networking Goals
 Kubernetes networking follows these rules:
-
-Every Pod gets its own IP
+```bash
+# Every Pod gets its own IP
 Pod A → 10.244.0.5
 Pod B → 10.244.0.6
-Pods communicate directly
-Pod A
-   ↓
-Pod B
+```
+```bash
+# Pods communicate directly
 
-No NAT required.
+      Pod A
+         ↓
+      Pod B
 
-Nodes communicate freely
+# No NAT required.
+```
+
+## Nodes communicate freely
+```bash
 Node 1
    ↓
 Node 2
-2. Pod-to-Pod Communication
+```
 
+## 2. Pod-to-Pod Communication
 Example:
-
+```bash
 Frontend Pod
     ↓
 Backend Pod
+```
 
 Each Pod has a unique IP.
-
+```
 Frontend: 10.244.1.5
 Backend : 10.244.2.8
-
+```
 Frontend can directly call:
-
+```
 http://10.244.2.8:8080
-Problem
+```
 
-Pod IPs change.
-
+Problem: **Pod IPs change.**
+```bash
 Pod Restart
       ↓
 New IP Assigned
 
 Applications break.
+```
 
-3. Service Discovery
-
+## 3. Service Discovery
 Solution:
-
-Use Services.
+```bash
+# Use Services.
 
 Backend Pods
       ↓
 Backend Service
-
+```
 Instead of calling Pod IP:
-
+```bash
 http://backend-service
-4. Kubernetes DNS
+```
 
+## 4. Kubernetes DNS
 Kubernetes includes DNS by default.
 
 Usually provided by:
-
+```bash
 CoreDNS
-
+```
 Every Service gets a DNS name.
 
-Example:
-
-Service:
-
+Example: Service
+```yml
 metadata:
   name: backend-service
+```
 
 DNS:
-
+```bash
 backend-service
-5. Internal DNS Resolution
+```
 
+## 5. Internal DNS Resolution
 Flow:
-
+```
 Frontend Pod
       ↓
 backend-service
@@ -98,23 +102,25 @@ DNS Lookup
 Service IP
       ↓
 Backend Pod
-6. Fully Qualified Domain Name (FQDN)
+```
 
+## 6. Fully Qualified Domain Name (FQDN)
 Format:
-
+```
 <service>.<namespace>.svc.cluster.local
-
+```
 Example:
-
+```
 backend.default.svc.cluster.local
-
+```
 Most apps simply use:
-
+```
 backend
-7. Cluster Networking
+```
 
+## 7. Cluster Networking
 Example cluster:
-
+```
 Node 1
  ├── Pod A
  └── Pod B
@@ -122,53 +128,52 @@ Node 1
 Node 2
  ├── Pod C
  └── Pod D
-
+```
 Communication:
-
+```
 Pod A ↔ Pod C
 Pod B ↔ Pod D
+```
+> Works automatically.
 
-Works automatically.
-
-8. CNI (Container Network Interface)
-
+## 8. CNI (Container Network Interface)
 Kubernetes itself doesn't implement networking.
 
-A CNI plugin does.
+> A CNI plugin does.
 
 Popular CNIs:
+- Calico
+- Flannel
+- Cilium
+- Weave Net
 
-Calico
-Flannel
-Cilium
-Weave Net
-9. Network Flow Example
-
+## 9. Network Flow Example
 User request:
-
+```
 Browser
    ↓
 Service
    ↓
 Pod
+```
 
 Internal request:
-
+```
 Frontend Pod
    ↓
 backend-service
    ↓
 Backend Pod
-10. Service Types Review
-ClusterIP
+```
 
-Internal only.
-
+## 10. Service Types Review
+ClusterIP: Internal only.
+```
 Pod ↔ Service ↔ Pod
+```
 
 Most common.
-
-NodePort
+```bash
 User
  ↓
 NodeIP:30007
@@ -184,53 +189,62 @@ Cloud Load Balancer
 Service
    ↓
 Pods
-11. DNS Testing
+```
 
+## 11. DNS Testing
 Enter a Pod:
-
+```bash
 kubectl exec -it <pod-name> -- sh
+```
 
 Test DNS:
-
+```bash
 nslookup backend-service
-
+```
 or
-
+```bash
 ping backend-service
-12. Useful Commands
-View Services
-kubectl get svc
-View Endpoints
-kubectl get endpoints
+```
 
-Endpoints show actual Pod IPs behind a Service.
+## 12. Useful Commands
+View Services
+```
+kubectl get svc
+```
+View Endpoints
+```
+kubectl get endpoints
+```
+> Endpoints show actual Pod IPs behind a Service.
 
 View DNS Pods
+```
 kubectl get pods -n kube-system
+```
+> Look for CoreDNS Pods.
 
-Look for CoreDNS Pods.
-
-13. Endpoints (Very Important)
-
+## 13. Endpoints (Very Important)
 Service:
-
+```bash
 backend-service
+```
 
 may point to:
-
+```bash
 10.244.1.5
 10.244.1.6
 10.244.1.7
-
-These are endpoints.
+```
+> These are endpoints.
 
 Check:
-
+```
 kubectl get endpoints
-14. Real Production Example
+```
 
+## 14. Real Production Example
 Microservices:
-
+```
 Frontend
    ↓
 user-service
@@ -238,53 +252,49 @@ user-service
 auth-service
    ↓
 database-service
-
+```
 Nobody talks directly to Pod IPs.
 
 Everything uses Service names.
 
-15. Common Networking Issues
+## 15. Common Networking Issues
 Service has no endpoints
 
 Cause:
-
-Wrong labels
-Wrong selectors
+- Wrong labels
+- Wrong selectors
 
 Check:
-
+```bash
 kubectl get endpoints
-DNS not resolving
+# DNS not resolving
+```
 
 Check:
-
+```bash
 kubectl get pods -n kube-system
-
+```
 Verify CoreDNS is running.
 
-Pod can't connect
-
+### Pod can't connect
 Check:
-
+```bash
 kubectl exec -it <pod> -- sh
 curl http://service-name
-16. Interview Questions
-How do Pods communicate?
+```
 
-Using Pod IPs through the cluster network.
+## 16. Interview Questions
+1. How do Pods communicate?
+      > sing Pod IPs through the cluster network.
 
-Why not use Pod IPs directly?
+2. Why not use Pod IPs directly?
+      > They change when Pods restart.
 
-They change when Pods restart.
+3. What provides service discovery?
+      > Kubernetes Services + DNS.
 
-What provides service discovery?
+4. What is CoreDNS?
+      > DNS server used inside Kubernetes clusters.
 
-Kubernetes Services + DNS.
-
-What is CoreDNS?
-
-DNS server used inside Kubernetes clusters.
-
-What is a CNI?
-
-Plugin responsible for cluster networking.
+5. What is a CNI?
+      > Plugin responsible for cluster networking.
