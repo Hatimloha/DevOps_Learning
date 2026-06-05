@@ -181,7 +181,9 @@ NodeIP:30007
 Service
  ↓
 Pod
+```
 LoadBalancer
+```
 Internet
    ↓
 Cloud Load Balancer
