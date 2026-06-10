@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-svc-check
+  namespace: check
+
+spec:
+  selector:
+    app: nginx-app
+
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30007
+
+  type: NodePort
