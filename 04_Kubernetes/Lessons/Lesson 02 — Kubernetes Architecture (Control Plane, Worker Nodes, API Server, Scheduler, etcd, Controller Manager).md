@@ -151,6 +151,7 @@ Worker Nodes run applications.
 Worker Node
 │
 ├── Kubelet
+└── kube proxy
 ├── Container Runtime
 └── Pods
 ```
