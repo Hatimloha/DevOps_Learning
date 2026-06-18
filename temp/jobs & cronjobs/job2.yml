@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hello-job
+
+spec:
+  backoffLimit: 4
+  template:
+    spec:
+      containers:
+        - name: hello
+          image: busybox
+          command: ["echo", "hello world"]
+
+      restartPolicy: Never

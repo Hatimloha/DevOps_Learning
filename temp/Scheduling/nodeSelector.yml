@@ -1,0 +1,19 @@
+############################
+# Label node
+# kubectl get nodes
+# kubectl label <node-name>  node-1 env=prod
+#############################
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+
+spec:
+  nodeSelector:
+    env: dev
+
+  containers:
+    - name: nginx
+      image: nginx
+      
