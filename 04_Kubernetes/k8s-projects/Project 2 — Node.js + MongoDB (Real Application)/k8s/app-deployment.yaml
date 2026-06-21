@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: node-app
+  namespace: project2
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: node-app
+
+  template:
+    metadata:
+      labels:
+        app: node-app
+
+    spec:
+      imagePullSecrets:
+        - name: dockerhub-secret
+
+      containers:
+        - name: node-app
+          image: hatimlohawala/node-mongo:v1
+
+          ports:
+            - containerPort: 3000
+
+          env:
+          - name: MONGO_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: MONGO_HOST
+
+          - name: MONGO_USER
+            valueFrom:
+              secretKeyRef:
+                name: mongo-secret
+                key: MONGO_USER
+
+          - name: MONGO_PASS
+            valueFrom:
+              secretKeyRef:
+                name: mongo-secret
+                key: MONGO_PASS
+              

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: node-service
+  namespace: project2
+
+spec:
+  selector:
+    app: node-app
+
+
+  ports:
+    - port: 80
+      targetPort: 3000
+      nodePort: 30081
+
+  type: NodePort
