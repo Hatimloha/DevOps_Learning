@@ -1,0 +1,29 @@
+body{
+    font-family: Arial;
+    background: #000;
+}
+
+.container{
+    width:900px;
+    margin:40px auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+td,th{
+    border:1px solid #ddd;
+    padding:10px;
+}
+
+input{
+    margin:5px;
+    padding:8px;
+}
+
+button{
+    padding:8px 15px;
+    cursor:pointer;
+}
