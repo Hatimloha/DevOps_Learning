@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: nginx-job
+
+spec:
+  completions: 1
+  parallelism: 1
+
+  template:
+    spec: 
+      restartPolicy: Never
+      containers:
+        - name: busybox-job
+          image: busybox:1.36
+          command: ["sh", "-c", "echo Hello Kubernetes Job && sleep 5"]

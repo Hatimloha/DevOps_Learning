@@ -1,0 +1,19 @@
+# Helm API
+apiVersion: v2
+
+# Name of release
+name: test2
+
+# Description about the application
+description: Helm learning 
+
+# Type of chart => application / library
+type: application
+
+# Chart Version
+version: "0.1.0"
+
+# Application version
+appVersion: "1.0.0"
+
+

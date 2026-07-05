@@ -1,11 +1,11 @@
+# 1 pod in every node  
+
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
-  name: nginx-deployment
+  name: nginx-demonset
 
 spec:
-  replicas: 3
-  
   selector:
     matchLabels:
       app: nginx
@@ -14,11 +14,11 @@ spec:
     metadata:
       labels:
         app: nginx
-      
+
     spec:
       containers:
-      - name: nginx
-        image: nginx
+        - name: nginx
+          image: nginx
 
-        ports:
-        - containerPort: 80
+          ports:
+            - containerPort: 80

@@ -1,0 +1,29 @@
+image:
+  name: nginx
+  tag: ""
+
+replicaCount: 3
+
+labels:
+  matchLabels:
+    app: nginx
+
+port: 80
+
+
+config:
+
+  APP_NAME: ecommerce
+
+  DB_HOST: mysql
+
+  DB_PORT: 3306
+
+  LOG_LEVEL: info
+
+secret:
+  DB_PASSWORD: abc4542
+
+  JWT_SECRET: 12**7sd9dsdsDD
+
+  DB_USERNAME: admin

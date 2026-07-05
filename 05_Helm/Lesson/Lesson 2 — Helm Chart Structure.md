@@ -262,55 +262,105 @@ Then reuse it:
 {{ include "my-app.name" . }}
 ```
 
+Benefits:
+- Less duplication
+- Easier maintenance
+- Consistent naming
 
-## 
+## 6. NOTES.txt
+Displayed after installation.
+
+Example:
 ```bash
+Your application has been deployed successfully.
 
+Access it using:
+
+kubectl port-forward ...
+```
+Helpful for providing post-install instructions.
+
+## 7. tests/
+Contains test resources.
+
+Example:
+```bash
+tests/
+└── test-connection.yaml
+```
+You can run:
+```
+helm test my-app
+```
+to verify the deployment.
+
+## 8. .helmignore
+Works like .gitignore.
+
+Example:
+```bash
+.git/
+README.md
+*.log
+```
+Ignored files won't be included when packaging the chart.
+
+## How Everything Connects 
+```bash
+Chart.yaml
+     │
+     ▼
+values.yaml
+     │
+     ▼
+templates/
+     │
+     ▼
+Rendered YAML
+     │
+     ▼
+Kubernetes Cluster
 ```
 
-## 
+## Common Workflow
 ```bash
+helm create my-app
 
+# Edit chart metadata
+vim Chart.yaml
+
+# Configure defaults
+vim values.yaml
+
+# Customize templates
+vim templates/deployment.yaml
+
+# Validate chart
+helm lint my-app
+
+# Preview rendered manifests
+helm template my-app
+
+# Install
+helm install my-release ./my-app
 ```
 
-## 
+## Best Practices
+- Keep templates generic and configurable.
+- Put environment-specific settings in values.yaml or - separate values files.
+- Use _helpers.tpl for reusable names and labels.
+- Keep Chart.yaml clean and update versions appropriately.
+- Validate with helm lint before deploying.
+- Use helm template to inspect generated manifests - before applying them. 
+
+## Interview Questions
 ```bash
-
+1. What is a Helm Chart?
+2. What is the purpose of Chart.yaml?
+3. What is the difference between version and appVersion?
+4. Why is values.yaml important?
+5. What does the templates/ directory contain?
+6. What is _helpers.tpl used for?
+7. What is the purpose of the charts/ directory?
+8. What is the difference between helm template and helm install?
 ```
-
-## 
-```bash
-
-```
-
-## 
-```bash
-
-```
-
-## 
-```bash
-
-```
-
-## 
-```bash
-
-```
-
-## 
-```bash
-
-```
-
-## 
-```bash
-
-```
-
-## 
-```bash
-
-```
-
-
