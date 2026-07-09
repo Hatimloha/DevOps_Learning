@@ -1,268 +1,671 @@
-Lesson 21 — Kubernetes Scheduling (Where Pods Run)
+# Lesson 21 — Kubernetes Scheduling (Where Pods Run)
 
-So far Kubernetes decides:
+Until now, Kubernetes has handled:
 
-Which Pod runs
-How many run
-When they restart
+- Which Pods should run
+- How many Pods should run
+- When Pods should restart
 
-Now the important part:
+Now we learn an important question:
 
-“Which node should a Pod run on?”
+> **Which Node should a Pod run on?**
 
-That’s Scheduling.
+This process is called **Scheduling**.
 
-1. What is Scheduling?
+---
 
-Kubernetes Scheduler decides:
+# 1. What is Scheduling?
 
+Kubernetes Scheduling is the process of deciding:
+
+```text
 Pod → Node placement
+```
 
 Example:
 
+```text
 Pod A → Node 1
+
 Pod B → Node 2
+
 Pod C → Node 3
-2. Default Scheduling
+```
 
-Without any rules:
+The component responsible for this decision is:
 
-Scheduler picks any available node
+```text
+kube-scheduler
+```
 
-Based on:
+---
 
-CPU available
-Memory available
-Node health
-3. Node Selector (Basic Scheduling)
+# 2. Default Scheduling
 
-👉 Simplest way to control node placement.
+Without any scheduling rules, Kubernetes Scheduler automatically selects a suitable node.
 
-Step 1: Label node
+It considers:
 
+- Available CPU
+- Available Memory
+- Node health
+- Current workload
+- Resource requests
+
+Example:
+
+```text
+Pod Created
+
+      ↓
+
+Scheduler checks nodes
+
+      ↓
+
+Select best node
+
+      ↓
+
+Pod starts
+```
+
+---
+
+# 3. Node Selector (Basic Scheduling)
+
+`nodeSelector` is the simplest way to control where Pods run.
+
+It uses node labels.
+
+---
+
+## Step 1: Label a Node
+
+Example:
+
+```bash
 kubectl label node node-1 env=prod
+```
 
-Step 2: Use in Pod
+Now the node has:
 
+```text
+env=prod
+```
+
+---
+
+## Step 2: Use nodeSelector in Pod
+
+```yaml
 spec:
   nodeSelector:
     env: prod
+```
 
 Meaning:
 
-Run Pod ONLY on nodes with:
+The Pod will run only on nodes with:
+
+```text
 env=prod
-4. Node Affinity (Advanced Scheduling)
+```
 
-NodeSelector is basic (exact match only).
+---
 
-Node Affinity is smarter.
+# 4. Node Affinity (Advanced Scheduling)
 
-Example
+`nodeSelector` only supports simple exact matching.
+
+Example:
+
+```text
+env=prod
+```
+
+Node Affinity provides more advanced rules.
+
+Example:
+
+```yaml
 affinity:
   nodeAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       nodeSelectorTerms:
       - matchExpressions:
+
         - key: env
           operator: In
+
           values:
           - prod
           - staging
-Meaning
-Pod can run on:
-- prod nodes
-- staging nodes
-5. Node Affinity Types
-requiredDuringScheduling
+```
 
-👉 Hard rule (must match)
+Meaning:
 
-If no matching node → Pod stays Pending
-preferredDuringScheduling
+The Pod can run on:
 
-👉 Soft rule (best effort)
+```text
+prod nodes
 
-Try preferred node
-Else choose others
-6. Real Example
+OR
+
+staging nodes
+```
+
+---
+
+# 5. Node Affinity Types
+
+## requiredDuringSchedulingIgnoredDuringExecution
+
+Hard requirement.
+
+The rule must match.
+
+Example:
+
+```text
+No matching node
+
+↓
+
+Pod remains Pending
+```
+
+---
+
+## preferredDuringSchedulingIgnoredDuringExecution
+
+Soft preference.
+
+Kubernetes tries to satisfy the rule.
+
+Example:
+
+```text
+Prefer GPU node
+
+If unavailable:
+
+Use another node
+```
+
+---
+
+# 6. Real Example: Prefer GPU Nodes
+
+```yaml
 affinity:
   nodeAffinity:
     preferredDuringSchedulingIgnoredDuringExecution:
+
     - weight: 1
+
       preference:
         matchExpressions:
+
         - key: gpu
           operator: In
+
           values:
           - true
+```
 
 Meaning:
 
+```text
 Prefer GPU nodes
-But not required
-7. Pod Affinity (Run Together)
 
-👉 Place Pods close to each other.
+But not required
+```
+
+---
+
+# 7. Pod Affinity (Run Together)
+
+Pod Affinity places Pods close to each other.
 
 Example:
 
-frontend + cache on same node
+```text
+Frontend
++
+Cache
+```
+
+running on the same node can reduce latency.
+
+Example:
+
+```yaml
 affinity:
   podAffinity:
+
     requiredDuringSchedulingIgnoredDuringExecution:
+
     - labelSelector:
         matchLabels:
           app: cache
+
       topologyKey: "kubernetes.io/hostname"
+```
 
 Meaning:
 
-Place this Pod where cache Pod already exists
-8. Pod Anti-Affinity (Avoid Together)
+Place this Pod where a cache Pod already exists.
 
-👉 Spread Pods across nodes.
+---
+
+# 8. Pod Anti-Affinity (Avoid Together)
+
+Pod Anti-Affinity prevents Pods from running together.
 
 Example:
 
-Don’t place 2 database Pods on same node
+```text
+Database Replica 1 → Node 1
+
+Database Replica 2 → Node 2
+```
+
+instead of:
+
+```text
+Node 1
+
+Database Replica 1
+Database Replica 2
+```
+
+Example:
+
+```yaml
 affinity:
   podAntiAffinity:
+
     requiredDuringSchedulingIgnoredDuringExecution:
+
     - labelSelector:
         matchLabels:
           app: db
+
       topologyKey: "kubernetes.io/hostname"
+```
 
 Meaning:
 
-Each DB Pod must be on different node
-9. Taints & Tolerations (Node Protection)
+Database Pods must run on different nodes.
 
-👉 Nodes can “reject” Pods.
+---
 
-Taint Node
+# 9. Taints & Tolerations (Node Protection)
+
+Sometimes nodes should reject normal workloads.
+
+A node can be protected using a **Taint**.
+
+---
+
+## Add Taint to Node
+
+```bash
 kubectl taint nodes node-1 key=value:NoSchedule
+```
 
 Meaning:
 
-No Pod can run here unless allowed
-Toleration (Pod allows it)
+```text
+No Pods can run here
+```
+
+unless they have permission.
+
+---
+
+## Toleration (Pod Permission)
+
+Example:
+
+```yaml
 tolerations:
+
 - key: "key"
+
   operator: "Equal"
+
   value: "value"
+
   effect: "NoSchedule"
+```
 
 Meaning:
 
-This Pod is allowed on tainted node
-10. Taint Effects
-Effect	Meaning
-NoSchedule	Pod blocked
-PreferNoSchedule	Try avoid
-NoExecute	Evict running Pods
-11. Real Production Use
-Master Nodes → tainted (no normal workloads)
-GPU Nodes → only ML workloads
-DB Nodes → only database Pods
-12. Full Scheduling Flow
+This Pod is allowed to run on the tainted node.
+
+---
+
+# 10. Taint Effects
+
+| Effect | Meaning |
+|---|---|
+| NoSchedule | New Pods are blocked |
+| PreferNoSchedule | Try to avoid placing Pods |
+| NoExecute | Existing Pods may be evicted |
+
+---
+
+# 11. Real Production Usage
+
+Common examples:
+
+## Master Nodes
+
+Usually tainted:
+
+```text
+No normal workloads
+```
+
+---
+
+## GPU Nodes
+
+Only allow:
+
+```text
+Machine Learning workloads
+```
+
+---
+
+## Database Nodes
+
+Only allow:
+
+```text
+Database Pods
+```
+
+---
+
+# 12. Complete Scheduling Flow
+
+When a Pod is created:
+
+```text
 Pod Created
-   ↓
+     ↓
 Check Node Selector
-   ↓
+     ↓
 Check Node Affinity
-   ↓
+     ↓
+Check Pod Affinity / Anti-Affinity
+     ↓
 Check Taints & Tolerations
-   ↓
-Check Resources (CPU/Memory)
-   ↓
-Pick Node
-13. Scheduling Cheat Sheet
-Feature	Use Case
-nodeSelector	Simple placement
-nodeAffinity	Advanced rules
-podAffinity	Co-locate apps
-podAntiAffinity	Spread apps
-taints	Protect nodes
-tolerations	Allow special Pods
-14. Commands You Must Know
-View nodes
+     ↓
+Check Resources
+     ↓
+Select Node
+```
+
+---
+
+# 13. Scheduling Cheat Sheet
+
+| Feature | Use Case |
+|---|---|
+| nodeSelector | Simple node placement |
+| nodeAffinity | Advanced node rules |
+| podAffinity | Place Pods together |
+| podAntiAffinity | Spread Pods apart |
+| taints | Protect nodes |
+| tolerations | Allow Pods on protected nodes |
+
+---
+
+# 14. Commands You Must Know
+
+## View Nodes
+
+```bash
 kubectl get nodes
-Label node
+```
+
+---
+
+## Label Node
+
+```bash
 kubectl label node node-1 env=prod
-Check labels
+```
+
+---
+
+## Check Node Labels
+
+```bash
 kubectl get nodes --show-labels
-Taint node
+```
+
+---
+
+## Taint Node
+
+```bash
 kubectl taint nodes node-1 key=value:NoSchedule
-Remove taint
+```
+
+---
+
+## Remove Taint
+
+```bash
 kubectl taint nodes node-1 key=value:NoSchedule-
-15. Common Mistakes
-No matching node
-Pod stuck in Pending
+```
+
+---
+
+# 15. Common Mistakes
+
+## No Matching Node
+
+Pod status:
+
+```text
+Pending
+```
 
 Reason:
 
-No node satisfies selector
-Forgetting toleration
-Pod rejected by tainted node
-Wrong labels
-env=prod (node)
-env=production (pod)
+No node satisfies:
 
-Mismatch → scheduling fails
+```yaml
+nodeSelector
+```
 
-16. Interview Questions
-What is Kubernetes scheduling?
+or:
 
-Process of assigning Pods to nodes.
+```yaml
+nodeAffinity
+```
 
-Difference between nodeSelector and nodeAffinity?
-nodeSelector → simple equality
-nodeAffinity → advanced rules
-What is taint?
+---
 
-A restriction applied to nodes to repel Pods.
+## Forgetting Toleration
 
-What is toleration?
+Node has:
 
-Permission for a Pod to run on a tainted node.
+```text
+Taint
+```
 
-What is podAntiAffinity?
+Pod has:
 
-Ensures Pods do NOT run together.
+```text
+No toleration
+```
 
-17. LAB
-Task 1
+Result:
 
-Label node:
+Pod cannot schedule.
 
+---
+
+## Wrong Labels
+
+Node:
+
+```text
+env=prod
+```
+
+Pod expects:
+
+```text
+env=production
+```
+
+Mismatch:
+
+```text
+Scheduling fails
+```
+
+---
+
+# 16. Interview Questions
+
+## What is Kubernetes Scheduling?
+
+The process of assigning Pods to appropriate Nodes.
+
+---
+
+## Difference between nodeSelector and nodeAffinity?
+
+### nodeSelector
+
+- Simple matching
+- Equality based
+
+Example:
+
+```yaml
+env: prod
+```
+
+---
+
+### nodeAffinity
+
+- Advanced rules
+- Supports operators
+- Supports preferences
+
+---
+
+## What is a Taint?
+
+A restriction applied to Nodes to prevent unwanted Pods from running.
+
+---
+
+## What is a Toleration?
+
+A permission that allows a Pod to run on a tainted Node.
+
+---
+
+## What is Pod Anti-Affinity?
+
+A rule that prevents specific Pods from running together.
+
+---
+
+# 17. LAB Practice
+
+## Task 1
+
+Label a node:
+
+```text
 env=dev
-Task 2
+```
 
-Deploy Pod using nodeSelector.
+---
 
-Task 3
+## Task 2
 
-Create 2 replicas and apply podAntiAffinity.
+Deploy a Pod using:
 
-Task 4
+```yaml
+nodeSelector
+```
 
-Taint a node and test Pod scheduling failure.
+Verify it runs on the correct node.
 
-Task 5
+---
 
-Add toleration and fix scheduling.
+## Task 3
 
-18. Mental Model
-Scheduler Decision Flow:
+Create two replicas and apply:
 
+```text
+podAntiAffinity
+```
+
+Verify Pods run on different nodes.
+
+---
+
+## Task 4
+
+Taint a node:
+
+```bash
+kubectl taint nodes node-1 key=value:NoSchedule
+```
+
+Test Pod scheduling failure.
+
+---
+
+## Task 5
+
+Add a toleration and fix scheduling.
+
+---
+
+# 18. Mental Model
+
+Scheduler decision flow:
+
+```text
 Node Selector
-   ↓
+      ↓
 Node Affinity
-   ↓
+      ↓
+Pod Affinity / Anti-Affinity
+      ↓
 Taints & Tolerations
-   ↓
-Resources Check
-   ↓
+      ↓
+Resource Check
+      ↓
 Final Node Selection
+```
+
+---
+
+# Summary
+
+- Kubernetes Scheduler decides where Pods run.
+- `nodeSelector` provides simple node placement.
+- `nodeAffinity` provides advanced scheduling rules.
+- `podAffinity` places related Pods together.
+- `podAntiAffinity` spreads Pods across nodes.
+- Taints protect nodes from unwanted workloads.
+- Tolerations allow specific Pods onto protected nodes.
+- Scheduling rules are essential for production clusters with specialized nodes.

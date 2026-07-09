@@ -1,73 +1,110 @@
-Lesson 19 — RBAC (Role-Based Access Control), Service Accounts & Security Fundamentals
+# Lesson 19 — RBAC (Role-Based Access Control), Service Accounts & Security Fundamentals
 
-Security is one of the most important Kubernetes topics.
+Security is one of the most important topics in Kubernetes.
 
-Question:
+A common question:
 
 Can every user:
+
 - Delete Pods?
 - Create Deployments?
 - Read Secrets?
 - Access Production?
 
-Obviously not.
+Obviously, the answer is **No**.
 
 Kubernetes controls access using:
 
-RBAC
-(Role Based Access Control)
-1. What is RBAC?
+# RBAC
 
-RBAC determines:
+**Role-Based Access Control**
 
+RBAC decides:
+
+```text
 Who
+ ↓
 Can Do What
+ ↓
 On Which Resource
+```
 
 Example:
 
+```text
 Developer
-   ↓
+
 Can:
-- View Pods
-- View Services
+✅ View Pods
+✅ View Services
 
 Cannot:
-- Delete Nodes
-- Read Secrets
-RBAC Components
+❌ Delete Nodes
+❌ Read Secrets
+```
+
+---
+
+# 1. What is RBAC?
+
+RBAC is Kubernetes' authorization mechanism that controls what actions users and applications can perform.
+
+RBAC has four main components:
+
+```text
 Role
   ↓
 RoleBinding
   ↓
 User / ServiceAccount
-2. Authentication vs Authorization
-Authentication
-Who are you?
+```
 
-Example:
+---
 
+# 2. Authentication vs Authorization
+
+## Authentication
+
+Authentication answers:
+
+> Who are you?
+
+Examples:
+
+```text
 hatim
 admin
 jenkins
 github-actions
-Authorization
-What can you do?
+```
+
+---
+
+## Authorization
+
+Authorization answers:
+
+> What can you do?
+
+Examples:
+
+```text
+View Pods       ✅
+Delete Nodes    ❌
+Read Secrets    ❌
+```
+
+RBAC handles **Authorization**.
+
+---
+
+# 3. Role
+
+A **Role** defines permissions inside a specific namespace.
 
 Example:
 
-View Pods ✅
-Delete Nodes ❌
-Read Secrets ❌
-
-RBAC handles Authorization.
-
-3. Role
-
-A Role defines permissions inside a namespace.
-
-Example:
-
+```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 
@@ -85,45 +122,58 @@ rules:
   - get
   - list
   - watch
+```
 
-Meaning:
+This allows:
 
-Can:
-get pods
-list pods
-watch pods
+```text
+✅ get pods
+✅ list pods
+✅ watch pods
+```
 
-Cannot:
-delete pods
-create pods
-4. Understanding Verbs
+But denies:
 
-Common verbs:
+```text
+❌ delete pods
+❌ create pods
+```
 
-Verb	Meaning
-get	Read one object
-list	List objects
-watch	Monitor changes
-create	Create resource
-update	Update resource
-patch	Partial update
-delete	Delete resource
-5. RoleBinding
+---
 
-Role alone does nothing.
+# 4. Understanding RBAC Verbs
 
-Need:
+| Verb | Meaning |
+|------|---------|
+| get | Read one object |
+| list | List objects |
+| watch | Monitor changes |
+| create | Create resources |
+| update | Update resources |
+| patch | Partial update |
+| delete | Delete resources |
 
+---
+
+# 5. RoleBinding
+
+A Role alone does nothing.
+
+It needs to be connected to a user or ServiceAccount.
+
+This connection is created using:
+
+```text
 Role
-  +
-User
-
-Connected by:
-
+ +
+User / ServiceAccount
+ =
 RoleBinding
+```
 
 Example:
 
+```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 
@@ -138,40 +188,60 @@ subjects:
 roleRef:
   kind: Role
   name: pod-reader
-
   apiGroup: rbac.authorization.k8s.io
+```
 
 Flow:
 
+```text
 Role
-   ↓
+ ↓
 RoleBinding
-   ↓
+ ↓
 ServiceAccount
-6. ServiceAccount
+```
 
-Applications running inside Pods don't use human users.
+---
+
+# 6. ServiceAccount
+
+Applications running inside Pods do not use human users.
 
 They use:
 
+```text
 ServiceAccounts
+```
 
-Create one:
+Create a ServiceAccount:
 
+```yaml
 apiVersion: v1
 kind: ServiceAccount
 
 metadata:
   name: developer
+```
 
-View:
+View ServiceAccounts:
 
+```bash
 kubectl get sa
+```
 
-or
+or:
 
+```bash
 kubectl get serviceaccounts
-7. Pod Using ServiceAccount
+```
+
+---
+
+# 7. Pod Using ServiceAccount
+
+Example:
+
+```yaml
 apiVersion: v1
 kind: Pod
 
@@ -184,10 +254,13 @@ spec:
   containers:
   - name: nginx
     image: nginx
+```
 
-Now the Pod receives permissions from that ServiceAccount.
+Now this Pod receives permissions from the ServiceAccount.
 
-Architecture
+Architecture:
+
+```text
 Pod
  ↓
 ServiceAccount
@@ -197,190 +270,405 @@ RoleBinding
 Role
  ↓
 Permissions
-8. ClusterRole
+```
 
-Role works only in one namespace.
+---
+
+# 8. ClusterRole
+
+A **Role** works only inside one namespace.
 
 Example:
 
+```text
 dev namespace only
+```
 
-Sometimes permissions are cluster-wide.
+But sometimes permissions need to apply across the whole cluster.
 
-Use:
+For this, Kubernetes provides:
 
+```text
 ClusterRole
+```
 
 Example:
 
+```yaml
 kind: ClusterRole
+```
 
-Can grant:
+ClusterRoles can manage cluster-wide resources:
 
-Nodes
-Namespaces
-PersistentVolumes
+- Nodes
+- Namespaces
+- PersistentVolumes
+- Cluster resources
 
-Cluster resources.
+---
 
-9. ClusterRoleBinding
+# 9. ClusterRoleBinding
 
-Connects:
+ClusterRoleBinding connects:
 
+```text
 ClusterRole
-    ↓
-ServiceAccount/User
+      ↓
+User / ServiceAccount
+```
 
-Across the entire cluster.
+across the entire cluster.
 
-Example:
+---
 
-kind: ClusterRoleBinding
-Role vs ClusterRole
-Feature	Role	ClusterRole
-Namespace scope	Yes	No
-Cluster-wide	No	Yes
-Nodes access	No	Yes
-Namespaces access	No	Yes
-10. Example Permission Flow
+# Role vs ClusterRole
 
-Developer Pod:
+| Feature | Role | ClusterRole |
+|----------|------|-------------|
+| Namespace scope | ✅ Yes | ❌ No |
+| Cluster-wide access | ❌ No | ✅ Yes |
+| Access Nodes | ❌ No | ✅ Yes |
+| Access Namespaces | ❌ No | ✅ Yes |
 
+---
+
+# 10. Example Permission Flow
+
+Developer application:
+
+```text
 developer-sa
+```
 
 Role:
 
+```text
 View Pods
 View Services
+```
 
 Binding:
 
+```text
 developer-sa
        ↓
 RoleBinding
        ↓
 pod-reader
+```
 
 Result:
 
-kubectl get pods ✅
-kubectl delete pod ❌
-11. Check Permissions
+```bash
+kubectl get pods
+```
 
-Useful command:
+✅ Allowed
 
+```bash
+kubectl delete pod nginx
+```
+
+❌ Denied
+
+---
+
+# 11. Check Permissions
+
+Kubernetes provides:
+
+```bash
+kubectl auth can-i
+```
+
+Example:
+
+```bash
 kubectl auth can-i get pods
+```
 
 Output:
 
+```text
 yes
+```
 
-Another:
+---
 
+Check restricted actions:
+
+```bash
 kubectl auth can-i delete nodes
+```
 
 Output:
 
+```text
 no
+```
 
-Check as ServiceAccount:
+---
 
+Check permissions as a ServiceAccount:
+
+```bash
 kubectl auth can-i get pods \
 --as=system:serviceaccount:dev:developer
-12. Common Production Roles
-Read-Only
-View resources
-Developer
+```
+
+---
+
+# 12. Common Production Roles
+
+## Read-Only User
+
+Permissions:
+
+```text
+View resources only
+```
+
+---
+
+## Developer
+
+Usually allowed:
+
+```text
 Pods
 Deployments
 Services
-CI/CD
-Deploy applications
-Cluster Admin
-Everything
-13. Security Best Practices
-Principle of Least Privilege
+ConfigMaps
+```
 
-Give only required permissions.
+---
+
+## CI/CD Account
+
+Used by:
+
+- Jenkins
+- GitHub Actions
+- GitLab CI
+
+Permissions:
+
+```text
+Deploy applications
+Update workloads
+```
+
+---
+
+## Cluster Admin
+
+Full access:
+
+```text
+Everything
+```
+
+Should be used carefully.
+
+---
+
+# 13. Kubernetes Security Best Practices
+
+## Principle of Least Privilege
+
+Give only the permissions required.
 
 Bad:
 
+```text
 Admin Access
+```
 
 Good:
 
+```text
 Read Pods Only
-Avoid Cluster Admin
+```
 
-Never give:
+---
 
+## Avoid Cluster Admin
+
+Avoid giving:
+
+```text
 cluster-admin
+```
 
 unless absolutely necessary.
 
-Separate Service Accounts
+---
+
+## Use Separate ServiceAccounts
 
 Bad:
 
-All apps use default account
+```text
+All applications use default account
+```
 
 Good:
 
+```text
 frontend-sa
 backend-sa
 monitoring-sa
-14. Common Mistakes
-Using Default ServiceAccount
+```
 
-Every Pod gets:
+---
 
+# 14. Common Mistakes
+
+## Using Default ServiceAccount
+
+Every Pod automatically gets:
+
+```text
 default
+```
 
-automatically.
+ServiceAccount.
 
-Create dedicated accounts instead.
+Better approach:
 
-Over-Permissive Roles
+Create dedicated accounts.
+
+---
+
+## Over-Permissive Roles
+
+Dangerous example:
+
+```yaml
 verbs:
 - "*"
+
 resources:
 - "*"
+```
 
-Dangerous.
+This gives unlimited access.
 
-Forgetting Namespace
+---
 
-Role applies only to its namespace.
+## Forgetting Namespace Scope
 
-15. Useful Commands
-View Roles
+A Role only works inside its namespace.
+
+Example:
+
+```text
+Role in dev namespace
+```
+
+cannot manage:
+
+```text
+production namespace
+```
+
+---
+
+# 15. Useful Commands
+
+## View Roles
+
+```bash
 kubectl get roles
-View RoleBindings
+```
+
+---
+
+## View RoleBindings
+
+```bash
 kubectl get rolebindings
-View ClusterRoles
+```
+
+---
+
+## View ClusterRoles
+
+```bash
 kubectl get clusterroles
-View Service Accounts
+```
+
+---
+
+## View ServiceAccounts
+
+```bash
 kubectl get sa
-Check Permissions
+```
+
+---
+
+## Check Permissions
+
+```bash
 kubectl auth can-i get pods
-Interview Questions
-What is RBAC?
+```
 
-Role-Based Access Control used for Kubernetes authorization.
+---
 
-Difference between Role and ClusterRole?
+# Interview Questions
 
-Role is namespace-scoped.
+## What is RBAC?
 
-ClusterRole is cluster-wide.
+RBAC (Role-Based Access Control) is Kubernetes authorization system used to control user and application permissions.
 
-What is a ServiceAccount?
+---
 
-An identity used by Pods to communicate with the Kubernetes API.
+## Difference between Role and ClusterRole?
 
-What does RoleBinding do?
+**Role:**
 
-Connects a Role to a User or ServiceAccount.
+- Namespace-scoped
+- Works inside one namespace
 
-What command checks permissions?
+**ClusterRole:**
+
+- Cluster-wide permissions
+- Can access cluster resources
+
+---
+
+## What is a ServiceAccount?
+
+A ServiceAccount is an identity used by Pods to communicate with the Kubernetes API.
+
+---
+
+## What does RoleBinding do?
+
+RoleBinding connects a Role with:
+
+- User
+- Group
+- ServiceAccount
+
+---
+
+## What command checks permissions?
+
+```bash
 kubectl auth can-i
+```
+
+---
+
+# Summary
+
+- RBAC controls **who can do what** in Kubernetes.
+- Authentication identifies users; Authorization controls permissions.
+- Roles define permissions inside namespaces.
+- ClusterRoles provide cluster-wide permissions.
+- RoleBindings connect permissions to users or ServiceAccounts.
+- ServiceAccounts provide identities for Pods.
+- Follow the principle of least privilege for production security.
+- Avoid giving unnecessary `cluster-admin` access.

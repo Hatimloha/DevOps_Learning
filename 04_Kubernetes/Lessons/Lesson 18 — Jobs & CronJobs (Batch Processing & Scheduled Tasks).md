@@ -1,56 +1,75 @@
-Lesson 18 — Jobs & CronJobs (Batch Processing & Scheduled Tasks)
+# Lesson 18 — Jobs & CronJobs (Batch Processing & Scheduled Tasks)
 
-So far you've learned workloads that run continuously:
+So far, you have learned Kubernetes workloads that run continuously:
 
-Deployment
-StatefulSet
-DaemonSet
+- Deployment
+- StatefulSet
+- DaemonSet
 
-These workloads are expected to stay alive forever.
+These workloads are expected to stay alive permanently.
 
-But some tasks should:
+However, some tasks should follow this lifecycle:
 
+```text
 Start
-↓
-Finish Work
-↓
+  ↓
+Perform Work
+  ↓
+Finish
+  ↓
 Exit
+```
 
 Examples:
 
-Database backup
-Data import
-Report generation
-Cleanup scripts
-Database migration
+- Database backups
+- Data imports
+- Report generation
+- Cleanup scripts
+- Database migrations
 
-This is where Jobs and CronJobs come in.
+For these use cases, Kubernetes provides:
 
-1. What is a Job?
+- **Jobs**
+- **CronJobs**
 
-A Job runs a task until it successfully completes.
+---
 
+# 1. What is a Job?
+
+A **Job** creates one or more Pods and ensures that a task runs successfully until completion.
+
+Lifecycle:
+
+```text
 Job
  ↓
 Pod
  ↓
-Work Finished
+Task Executes
  ↓
-Exit 0
+Exit Code 0
  ↓
 Completed ✅
+```
 
 Unlike Deployments:
 
+```text
 Deployment
  ↓
-Pod Exits
+Pod exits
  ↓
-Restart
+Restart automatically
+```
 
-A Job is considered successful when the task finishes.
+A Job considers the task successful when the process finishes.
 
-2. Simple Job Example
+---
+
+# 2. Simple Job Example
+
+```yaml
 apiVersion: batch/v1
 kind: Job
 
@@ -61,66 +80,114 @@ spec:
   template:
     spec:
       containers:
-      - name: hello
-        image: busybox
-        command: ["echo", "Hello Kubernetes"]
+        - name: hello
+          image: busybox
+          command: ["echo", "Hello Kubernetes"]
 
       restartPolicy: Never
+```
 
 Apply:
 
+```bash
 kubectl apply -f job.yaml
-3. Job Lifecycle
+```
+
+---
+
+# 3. Job Lifecycle
+
+```text
 Job Created
-     ↓
+      ↓
 Pod Starts
-     ↓
+      ↓
 Task Executes
-     ↓
+      ↓
 Pod Exits Successfully
-     ↓
-Job Complete
-4. Check Job Status
+      ↓
+Job Completed
+```
 
-View Jobs:
+The Pod does not need to run forever.
 
+---
+
+# 4. Check Job Status
+
+## View Jobs
+
+```bash
 kubectl get jobs
+```
 
 Example:
 
+```text
 NAME        COMPLETIONS   DURATION
 hello-job   1/1           5s
+```
 
-Describe:
+---
 
+## Describe Job
+
+```bash
 kubectl describe job hello-job
+```
 
-Logs:
+---
 
+## View Logs
+
+First find the Pod:
+
+```bash
+kubectl get pods
+```
+
+Then:
+
+```bash
 kubectl logs <pod-name>
-5. Failed Jobs
+```
 
-Suppose:
+---
 
+# 5. Failed Jobs
+
+Example command:
+
+```yaml
 command: ["false"]
+```
 
 Result:
 
+```text
 Exit Code = 1
+```
 
-Job fails.
+The Job fails.
 
-Kubernetes retries automatically.
+Kubernetes automatically retries failed Jobs.
 
-6. backoffLimit
+---
 
-Controls retry count.
+# 6. backoffLimit
 
+`backoffLimit` controls how many times Kubernetes retries a failed Job.
+
+Example:
+
+```yaml
 spec:
   backoffLimit: 4
+```
 
-Meaning:
+Flow:
 
+```text
 Try
  ↓
 Fail
@@ -134,31 +201,46 @@ Retry
 Retry
  ↓
 Mark Failed
-7. Parallel Jobs
+```
 
-Run multiple Pods simultaneously.
+After reaching the limit, Kubernetes marks the Job as failed.
 
-spec:
-  completions: 5
-  parallelism: 2
+---
 
-Meaning:
+# 7. Parallel Jobs
 
-Need 5 successful runs
-
-Run 2 Pods at a time
+Jobs can run multiple Pods simultaneously.
 
 Example:
 
+```yaml
+spec:
+  completions: 5
+  parallelism: 2
+```
+
+Meaning:
+
+- Need 5 successful completions.
+- Run 2 Pods at the same time.
+
+Execution:
+
+```text
 Pod1 ✅
 Pod2 ✅
 Pod3 ✅
 Pod4 ✅
 Pod5 ✅
+```
 
-Job completes.
+Job completes after all required tasks finish.
 
-8. Job Example with Parallelism
+---
+
+# 8. Job Example with Parallelism
+
+```yaml
 apiVersion: batch/v1
 kind: Job
 
@@ -172,31 +254,46 @@ spec:
   template:
     spec:
       containers:
-      - name: worker
-        image: busybox
-        command: ["sleep", "10"]
+        - name: worker
+          image: busybox
+          command: ["sleep", "10"]
 
       restartPolicy: Never
-9. What is a CronJob?
+```
 
-CronJob = Scheduled Job
+---
 
-Think Linux cron:
+# 9. What is a CronJob?
 
+A **CronJob** is a scheduled Job.
+
+It works similar to Linux cron.
+
+Example Linux cron:
+
+```text
 0 2 * * *
+```
 
 Runs every day at 2 AM.
 
-Kubernetes CronJob:
+Kubernetes CronJob flow:
 
+```text
 Schedule
-     ↓
+   ↓
 Creates Job
-     ↓
+   ↓
 Job Creates Pod
-     ↓
-Task Runs
-10. CronJob Example
+   ↓
+Task Executes
+```
+
+---
+
+# 10. CronJob Example
+
+```yaml
 apiVersion: batch/v1
 kind: CronJob
 
@@ -211,14 +308,22 @@ spec:
       template:
         spec:
           containers:
-          - name: backup
-            image: busybox
-            command:
-            - echo
-            - "Running backup"
+            - name: backup
+              image: busybox
+              command:
+                - echo
+                - "Running backup"
 
           restartPolicy: Never
-11. Cron Schedule Format
+```
+
+---
+
+# 11. Cron Schedule Format
+
+Format:
+
+```text
 * * * * *
 │ │ │ │ │
 │ │ │ │ └── Day of Week
@@ -226,19 +331,49 @@ spec:
 │ │ └────── Day of Month
 │ └──────── Hour
 └────────── Minute
+```
 
-Examples:
+---
 
-Every minute
+## Examples
+
+### Every Minute
+
+```text
 * * * * *
-Every hour
+```
+
+---
+
+### Every Hour
+
+```text
 0 * * * *
-Every day at 2 AM
+```
+
+---
+
+### Every Day at 2 AM
+
+```text
 0 2 * * *
-Every Sunday
+```
+
+---
+
+### Every Sunday
+
+```text
 0 0 * * 0
-12. Real Production Examples
-Database Backup
+```
+
+---
+
+# 12. Real Production Examples
+
+## Database Backup
+
+```text
 Every Day 2 AM
        ↓
 CronJob
@@ -246,92 +381,212 @@ CronJob
 Backup Database
        ↓
 Upload to Storage
-Log Cleanup
+```
+
+---
+
+## Log Cleanup
+
+```text
 Every Night
       ↓
 Delete Old Logs
-Report Generation
+```
+
+---
+
+## Report Generation
+
+```text
 Every Morning
        ↓
 Generate PDF Reports
-13. Useful Commands
-View Jobs
+```
+
+---
+
+# 13. Useful Commands
+
+## View Jobs
+
+```bash
 kubectl get jobs
-View CronJobs
+```
+
+---
+
+## View CronJobs
+
+```bash
 kubectl get cronjobs
+```
 
 Short form:
 
+```bash
 kubectl get cj
-Describe
+```
+
+---
+
+## Describe CronJob
+
+```bash
 kubectl describe cronjob backup-job
-View Pods
+```
+
+---
+
+## View Pods
+
+```bash
 kubectl get pods
-Logs
+```
+
+---
+
+## View Logs
+
+```bash
 kubectl logs <pod-name>
-14. Suspend a CronJob
+```
 
-Stop scheduling:
+---
 
+# 14. Suspend a CronJob
+
+Stop future scheduling:
+
+```yaml
 spec:
   suspend: true
+```
 
-Useful during maintenance.
+Useful during:
 
-15. Delete Old Job History
+- Maintenance
+- Testing
+- Debugging
+
+---
+
+# 15. Delete Old Job History
+
+To prevent old Jobs from filling the cluster:
+
+```yaml
 successfulJobsHistoryLimit: 3
 failedJobsHistoryLimit: 1
+```
 
-Keeps cluster clean.
+Meaning:
 
-16. Common Mistakes
-Using Deployment for Batch Work
+- Keep last 3 successful Jobs.
+- Keep last 1 failed Job.
 
-Wrong:
+---
 
-Run Backup
-      ↓
+# 16. Common Mistakes
+
+## Using Deployment for Batch Work
+
+Wrong approach:
+
+```text
+Backup Task
+     ↓
 Deployment
-      ↓
-Keeps Restarting Forever
+     ↓
+Restarts Forever
+```
 
-Use Job.
+A Deployment is designed for long-running applications.
 
-Wrong Cron Expression
+Use:
+
+```text
+Job
+```
+
+instead.
+
+---
+
+## Wrong Cron Expression
+
+Example:
+
+```text
 0 25 * * *
+```
 
-Invalid hour.
+Invalid because:
 
-CronJob won't work.
+- Hour range is 0-23.
 
-Missing restartPolicy
+CronJob will fail.
 
-Jobs usually require:
+---
 
+## Missing restartPolicy
+
+Jobs require:
+
+```yaml
 restartPolicy: Never
+```
 
-or
+or:
 
+```yaml
 restartPolicy: OnFailure
-17. Interview Questions
-What is a Job?
+```
 
-A Kubernetes resource that runs a task to completion.
+---
 
-What is a CronJob?
+# 17. Interview Questions
 
-A scheduled Job that runs based on a cron expression.
+### What is a Job?
 
-Difference between Job and Deployment?
-Feature	Job	Deployment
-Runs forever	❌	✅
-Completes task	✅	❌
-Batch processing	✅	❌
-Web applications	❌	✅
-What is backoffLimit?
+A Kubernetes resource that runs a task until it successfully completes.
 
-Maximum retries before marking a Job as failed.
+---
 
-What is parallelism?
+### What is a CronJob?
 
-Number of Pods running simultaneously.
+A Kubernetes resource that creates Jobs based on a schedule using a cron expression.
+
+---
+
+### Difference between Job and Deployment?
+
+| Feature | Job | Deployment |
+|----------|-----|------------|
+| Runs Forever | ❌ | ✅ |
+| Completes Tasks | ✅ | ❌ |
+| Batch Processing | ✅ | ❌ |
+| Web Applications | ❌ | ✅ |
+
+---
+
+### What is `backoffLimit`?
+
+The maximum number of retries before Kubernetes marks a Job as failed.
+
+---
+
+### What is `parallelism`?
+
+The number of Pods that can run simultaneously for a Job.
+
+---
+
+# Summary
+
+- **Jobs** are used for tasks that run once and complete.
+- **CronJobs** schedule Jobs at specific times.
+- Jobs are useful for backups, migrations, reports, and cleanup tasks.
+- `backoffLimit` controls retry attempts.
+- `parallelism` controls concurrent Pods.
+- Use Jobs for batch processing, not Deployments.
+- Cron expressions define when scheduled tasks execute.

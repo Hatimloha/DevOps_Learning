@@ -1,41 +1,33 @@
 # Lesson 14 — Namespaces (Logical Isolation, Multi-Tenancy, Resource Separation)
-As clusters grow, you can't keep everything in one place.
 
-## Imagine:
-Imagine:
-```
-Cluster
-├── Frontend
-├── Backend
-├── Database
-├── Monitoring
-├── Dev Apps
-├── Staging Apps
-└── Production Apps
-```
-Very quickly it becomes messy.
+As Kubernetes clusters grow, managing all resources in a single space becomes difficult. **Namespaces** provide logical isolation, making clusters easier to organize and manage.
 
-Kubernetes solves this with Namespaces.
+---
 
-1. What is a Namespace?
+# 1. What is a Namespace?
 
-A Namespace is a logical partition inside a Kubernetes cluster.
+A **Namespace** is a **logical partition** inside a Kubernetes cluster that isolates resources from one another.
 
-Think of it like folders:
+Think of namespaces like folders on your computer.
 
+```text
 Cluster
 │
 ├── dev
 ├── staging
 ├── production
 └── monitoring
+```
 
-Resources inside one namespace are isolated from others.
+Resources inside one namespace are isolated from resources in other namespaces.
 
-2. Why Use Namespaces?
+---
 
-Without namespaces:
+# 2. Why Use Namespaces?
 
+Without namespaces, resource names can conflict.
+
+```text
 frontend
 backend
 redis
@@ -44,105 +36,158 @@ frontend
 backend
 redis
 mysql
+```
 
-Name conflicts ❌
+❌ Name conflicts occur.
 
 With namespaces:
 
+```text
 dev/frontend
-prod/frontend
-
 dev/backend
+
+prod/frontend
 prod/backend
+```
 
-No conflicts ✅
+✅ Same resource names can exist in different namespaces without conflict.
 
-3. Default Namespaces
+Namespaces are commonly used to separate:
 
-Run:
+- Development
+- Staging
+- Production
+- Monitoring
+- Logging
 
+---
+
+# 3. Default Namespaces
+
+List all namespaces:
+
+```bash
 kubectl get ns
+```
 
-You'll see something like:
+Example output:
 
+```text
 default
 kube-system
 kube-public
 kube-node-lease
-default
+```
 
-Where resources go if no namespace is specified.
+### `default`
 
-kube-system
+Resources are created here if no namespace is specified.
 
-Contains cluster components:
+### `kube-system`
 
-CoreDNS
-Scheduler
-Controller Manager
-kube-public
+Contains Kubernetes system components such as:
 
-Publicly readable resources.
+- CoreDNS
+- Scheduler
+- Controller Manager
 
-kube-node-lease
+### `kube-public`
+
+Contains publicly readable resources.
+
+### `kube-node-lease`
 
 Used for node heartbeat tracking.
 
-4. Create a Namespace
+---
+
+# 4. Create a Namespace
+
+**namespace.yaml**
+
+```yaml
 apiVersion: v1
 kind: Namespace
 
 metadata:
   name: dev
+```
 
-Apply:
+Apply the manifest:
 
+```bash
 kubectl apply -f namespace.yaml
+```
 
-Or:
+Or create it directly:
 
+```bash
 kubectl create namespace dev
-5. Deploy Into a Namespace
+```
+
+---
+
+# 5. Deploy Into a Namespace
+
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 
 metadata:
   name: nginx
   namespace: dev
+```
 
-Now the deployment exists inside:
+This deployment will be created inside the **dev** namespace.
 
-dev namespace
-6. View Namespace Resources
+---
 
-Get all Pods:
+# 6. View Resources in a Namespace
 
+Get Pods from the **dev** namespace:
+
+```bash
 kubectl get pods -n dev
+```
 
 or
 
+```bash
 kubectl get pods --namespace=dev
-7. Same Name in Different Namespaces
+```
 
-This is allowed:
+---
 
+# 7. Same Resource Name in Different Namespaces
+
+Kubernetes allows resources with the same name if they belong to different namespaces.
+
+Example:
+
+```text
 dev/nginx
 prod/nginx
+```
 
-No conflict.
+Equivalent manifests:
 
-Example
+```yaml
 namespace: dev
 name: nginx
+```
 
-and
-
+```yaml
 namespace: prod
 name: nginx
+```
 
-Both can exist.
+Both Deployments can exist simultaneously.
 
-8. Namespace Architecture
+---
+
+# 8. Namespace Architecture
+
+```text
 Cluster
 │
 ├── dev
@@ -156,43 +201,63 @@ Cluster
 └── production
     ├── frontend
     └── backend
-9. Service Communication Across Namespaces
+```
 
-Inside same namespace:
+---
 
+# 9. Service Communication Across Namespaces
+
+Within the same namespace:
+
+```text
 backend-service
+```
 
-Works.
+works automatically.
 
-Across namespaces:
+Across namespaces, use the Fully Qualified Domain Name (FQDN):
 
-Use FQDN:
-
+```text
 backend.dev.svc.cluster.local
+```
 
 Format:
 
+```text
 <service>.<namespace>.svc.cluster.local
-10. Set Default Namespace
+```
 
-Instead of:
+---
 
+# 10. Set a Default Namespace
+
+Instead of specifying the namespace every time:
+
+```bash
 kubectl get pods -n dev
+```
 
-Set context:
+Set the current context:
 
+```bash
 kubectl config set-context --current --namespace=dev
+```
 
-Now:
+Now simply run:
 
+```bash
 kubectl get pods
+```
 
-Automatically uses dev.
+and Kubernetes will automatically use the **dev** namespace.
 
-11. Resource Quotas Per Namespace
+---
 
-Example:
+# 11. Resource Quotas Per Namespace
 
+Limit the amount of resources a namespace can consume.
+
+```yaml
 apiVersion: v1
 kind: ResourceQuota
 
@@ -204,25 +269,36 @@ spec:
   hard:
     requests.cpu: "2"
     requests.memory: 4Gi
+```
 
-Meaning:
+This limits the **dev** namespace to:
 
-dev namespace
-Max CPU = 2
-Max RAM = 4Gi
-12. LimitRange Per Namespace
+- Maximum CPU Requests: **2**
+- Maximum Memory Requests: **4Gi**
 
-Default resource settings:
+---
 
+# 12. LimitRange Per Namespace
+
+A **LimitRange** defines default or minimum/maximum resource values for Pods and Containers.
+
+```yaml
 apiVersion: v1
 kind: LimitRange
+```
 
-Used to enforce:
+Commonly used to enforce:
 
-Every Pod must have:
-CPU Requests
-Memory Requests
-13. Real Production Namespace Design
+- CPU Requests
+- CPU Limits
+- Memory Requests
+- Memory Limits
+
+---
+
+# 13. Typical Production Namespace Design
+
+```text
 kube-system
 monitoring
 logging
@@ -231,67 +307,141 @@ ingress-nginx
 dev
 staging
 production
+```
 
-Very common structure.
+This structure is commonly used in production Kubernetes clusters.
 
-14. Useful Commands
-List Namespaces
+---
+
+# 14. Useful Commands
+
+### List Namespaces
+
+```bash
 kubectl get ns
-Create Namespace
+```
+
+### Create Namespace
+
+```bash
 kubectl create namespace dev
-Delete Namespace
+```
+
+### Delete Namespace
+
+```bash
 kubectl delete namespace dev
+```
 
-⚠️ Deletes everything inside it.
+> **Warning:** Deleting a namespace deletes **all resources** inside it.
 
-View Resources
+### View All Resources
+
+```bash
 kubectl get all -n dev
-Describe Namespace
+```
+
+### Describe a Namespace
+
+```bash
 kubectl describe namespace dev
-15. Common Mistakes
-Deployment Not Found
+```
+
+---
+
+# 15. Common Mistakes
+
+## Deployment Not Found
+
+Command:
+
+```bash
 kubectl get deployment nginx
+```
 
-Returns:
+Output:
 
-NotFound
+```text
+Error from server (NotFound)
+```
 
 Reason:
 
-Deployment exists in dev namespace
+The Deployment exists in another namespace (e.g., `dev`).
 
-Use:
+Correct command:
 
+```bash
 kubectl get deployment nginx -n dev
-Service Can't Reach App
+```
+
+---
+
+## Service Cannot Reach the Application
 
 Often caused by:
 
-Service in namespace A
-Pod in namespace B
+- Service in Namespace **A**
+- Pod in Namespace **B**
 
-Check namespaces carefully.
+Always verify that the Service and Pod are in the correct namespace, or use the Service FQDN when communicating across namespaces.
 
-16. Interview Questions
-What is a Namespace?
+---
 
-A logical isolation mechanism inside a Kubernetes cluster.
+# 16. Interview Questions
 
-Why use Namespaces?
-Resource organization
-Multi-tenancy
-Environment separation
-Resource quotas
-Can two Deployments have the same name?
+### What is a Namespace?
 
-Yes, if they are in different namespaces.
+A logical isolation mechanism inside a Kubernetes cluster used to organize and separate resources.
 
-What is the default namespace?
+---
 
+### Why are Namespaces used?
+
+- Resource organization
+- Multi-tenancy
+- Environment separation (Dev, Staging, Production)
+- Resource quotas and limits
+
+---
+
+### Can two Deployments have the same name?
+
+Yes, as long as they are created in different namespaces.
+
+Example:
+
+```text
+dev/nginx
+prod/nginx
+```
+
+---
+
+### What is the default namespace?
+
+```text
 default
+```
 
-How do Services communicate across namespaces?
+---
 
-Using:
+### How do Services communicate across namespaces?
 
+Using the Fully Qualified Domain Name (FQDN):
+
+```text
 service.namespace.svc.cluster.local
+```
+
+---
+
+# Summary
+
+- Namespaces logically isolate resources inside a Kubernetes cluster.
+- Resources with the same name can exist in different namespaces.
+- Kubernetes provides four default namespaces.
+- Use namespaces to separate environments like Dev, Staging, and Production.
+- ResourceQuota and LimitRange help control resource usage within a namespace.
+- Services communicate across namespaces using their FQDN.
+- Setting a default namespace simplifies daily `kubectl` commands.

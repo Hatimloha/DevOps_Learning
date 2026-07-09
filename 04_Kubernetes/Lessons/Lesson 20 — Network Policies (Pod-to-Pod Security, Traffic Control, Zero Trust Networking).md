@@ -1,157 +1,257 @@
-Lesson 20 — Network Policies (Pod-to-Pod Security, Traffic Control, Zero Trust Networking)
+# Lesson 20 — Network Policies (Pod-to-Pod Security, Traffic Control, Zero Trust Networking)
 
-Until now, every Pod in your cluster can usually communicate with every other Pod.
+Until now, all Pods in your Kubernetes cluster could usually communicate with each other.
 
 Example:
 
+```text
 Frontend Pod  ─────────► Backend Pod ✅
 Frontend Pod  ─────────► Database Pod ✅
 Monitoring Pod ────────► Database Pod ✅
 Random Pod ────────────► Backend Pod ✅
+```
 
-This is Kubernetes' default networking model (assuming your CNI supports it).
+This is the default Kubernetes networking model (assuming your CNI plugin supports it).
 
-In production, this is not secure.
+In production environments, this is usually **not secure**.
 
-1. What is a NetworkPolicy?
+A better approach is:
 
-A NetworkPolicy is like a firewall for Pods.
+> Allow only required communication and block everything else.
+
+This is called **Zero Trust Networking**.
+
+---
+
+# 1. What is a NetworkPolicy?
+
+A **NetworkPolicy** is a Kubernetes resource that works like a firewall for Pods.
 
 It controls:
 
-Which Pods can send traffic
-Which Pods can receive traffic
-Which ports are allowed
-(Optionally) which external IPs are allowed
-Think of it like this
+- Which Pods can send traffic
+- Which Pods can receive traffic
+- Which ports are allowed
+- Which namespaces can communicate
+- Which external IP ranges can access Pods
+
+Think of it like:
+
+```text
 Internet Firewall
         ↓
 Protects Servers
+```
 
-Kubernetes NetworkPolicy
+Kubernetes NetworkPolicy:
+
+```text
+NetworkPolicy
         ↓
 Protects Pods
-2. Why Do We Need It?
+```
 
-Suppose you have:
+---
 
+# 2. Why Do We Need NetworkPolicies?
+
+Imagine a three-tier application:
+
+```text
 Frontend
 Backend
 Database
+```
 
 Without NetworkPolicy:
 
+```text
 Frontend ─────► Backend ✅
 Frontend ─────► Database ✅
 Backend  ─────► Database ✅
 Random Pod ───► Database ✅
+```
 
-The database is exposed to every Pod.
+Every Pod can access the database.
+
+This creates a security risk.
+
+---
 
 With NetworkPolicy:
 
+```text
 Frontend ─────► Backend ✅
+
 Backend  ─────► Database ✅
 
 Frontend ─────► Database ❌
+
 Random Pod ───► Database ❌
+```
 
-Much safer.
+Only required communication is allowed.
 
-3. NetworkPolicy Components
+---
+
+# 3. NetworkPolicy Components
+
+A NetworkPolicy contains:
+
+```text
 NetworkPolicy
 
 ├── podSelector
 ├── policyTypes
 ├── ingress
 └── egress
-4. podSelector
+```
 
-Selects which Pods the policy protects.
+---
+
+# 4. podSelector
+
+`podSelector` defines which Pods the policy applies to.
 
 Example:
 
+```yaml
 podSelector:
   matchLabels:
     app: database
+```
 
 Meaning:
 
 Apply this policy only to:
 
+```text
 app=database
-5. policyTypes
+```
 
-Defines what traffic is controlled.
+Pods.
 
-Example:
+---
 
-policyTypes:
-- Ingress
+# 5. policyTypes
+
+Defines which traffic direction is controlled.
+
+## Ingress
 
 Controls incoming traffic.
 
-Or:
-
+```yaml
 policyTypes:
-- Egress
+- Ingress
+```
+
+Question answered:
+
+> Who can access this Pod?
+
+---
+
+## Egress
 
 Controls outgoing traffic.
 
-Or both:
+```yaml
+policyTypes:
+- Egress
+```
 
+Question answered:
+
+> Where can this Pod connect?
+
+---
+
+## Both
+
+```yaml
 policyTypes:
 - Ingress
 - Egress
-6. Ingress Policy
+```
 
-Controls:
+Controls both directions.
 
+---
+
+# 6. Ingress Policy
+
+Ingress controls:
+
+```text
 Who can reach this Pod?
+```
 
 Example:
 
+```yaml
 ingress:
+```
 
-Think:
+It defines allowed incoming connections.
 
-Incoming traffic
-7. Egress Policy
+---
 
-Controls:
+# 7. Egress Policy
 
+Egress controls:
+
+```text
 Where can this Pod connect?
+```
 
 Example:
 
+```yaml
 egress:
+```
 
-Think:
+It defines allowed outgoing connections.
 
-Outgoing traffic
-8. Allow Backend to Access Database
+---
 
-Pods:
+# 8. Allow Backend to Access Database
 
+Application Pods:
+
+```text
 Frontend
 
 Backend
 
 Database
+```
 
 Labels:
 
-Frontend
-app=frontend
+Frontend:
 
-Backend
-app=backend
+```yaml
+app: frontend
+```
 
-Database
-app=database
+Backend:
 
-Policy:
+```yaml
+app: backend
+```
 
+Database:
+
+```yaml
+app: database
+```
+
+---
+
+NetworkPolicy:
+
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
@@ -171,39 +271,68 @@ spec:
     - podSelector:
         matchLabels:
           app: backend
+```
 
 Meaning:
 
-Database accepts traffic only from:
+The database accepts traffic only from:
 
+```text
 app=backend
+```
 
-Result
+---
 
+Result:
+
+```text
 Backend → Database ✅
 
 Frontend → Database ❌
 
 Random Pod → Database ❌
-9. Allow Specific Port Only
+```
+
+---
+
+# 9. Allow Specific Port Only
 
 Example:
 
+```yaml
 ports:
 - protocol: TCP
   port: 3306
+```
 
 Meaning:
 
-Only MySQL traffic.
+Only MySQL traffic is allowed.
 
+Allowed:
+
+```text
 TCP 3306 ✅
+```
 
-Everything else ❌
-10. Default Deny Policy
+Blocked:
 
-One of the most common production policies.
+```text
+Other ports ❌
+```
 
+---
+
+# 10. Default Deny Policy
+
+A common production security pattern is:
+
+1. Block everything.
+2. Allow only required traffic.
+
+Example:
+
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
@@ -215,84 +344,121 @@ spec:
 
   policyTypes:
   - Ingress
+```
 
-Notice:
+Important:
 
+```yaml
 podSelector: {}
+```
 
-This means:
+means:
 
+```text
 Every Pod
+```
 
-Since no ingress rules exist:
+Because there are no ingress rules:
 
-Everything blocked
-Visual
+```text
+All incoming traffic is blocked.
+```
+
+---
 
 Before:
 
+```text
 Everyone
-      ↓
+    ↓
 Every Pod
+```
+
+---
 
 After:
 
+```text
 Nobody
-      ↓
+    ↓
 Every Pod
+```
 
-Then you explicitly allow only required traffic.
+Then you create specific allow rules.
 
-This is called:
+This approach is called:
 
+```text
 Default Deny
-11. Namespace Selector
+```
+
+---
+
+# 11. Namespace Selector
 
 Allow traffic from another namespace.
 
 Example:
 
+```yaml
 from:
 - namespaceSelector:
     matchLabels:
       env: production
+```
 
-Only namespaces labeled:
+Only namespaces with:
 
+```text
 env=production
+```
 
-can connect.
+can communicate.
 
-12. IP Block
+---
 
-Allow external IPs.
+# 12. IP Block
 
+Allow external IP ranges.
+
+Example:
+
+```yaml
 from:
 - ipBlock:
     cidr: 10.0.0.0/24
+```
 
-Meaning:
+Allows:
 
+```text
 10.0.0.1
 10.0.0.2
 10.0.0.3
 ...
+```
 
-Allowed.
+---
 
-13. Full Production Example
+# 13. Full Production Example
+
+Architecture:
+
+```text
 Internet
-     ↓
+    ↓
 Ingress
-     ↓
+    ↓
 Frontend
-     ↓
+    ↓
 Backend
-     ↓
+    ↓
 Database
+```
 
-Policies:
+Network rules:
 
+```text
 Internet → Frontend ✅
 
 Frontend → Backend ✅
@@ -302,131 +468,252 @@ Backend → Database ✅
 Frontend → Database ❌
 
 Database → Internet ❌
-14. Useful Commands
-View Policies
+```
+
+Only required paths are open.
+
+---
+
+# 14. Useful Commands
+
+## View NetworkPolicies
+
+```bash
 kubectl get networkpolicy
+```
 
 Short form:
 
+```bash
 kubectl get netpol
+```
 
-Describe:
+---
 
+## Describe NetworkPolicy
+
+```bash
 kubectl describe networkpolicy db-policy
+```
 
-View labels:
+---
 
+## View Pod Labels
+
+```bash
 kubectl get pods --show-labels
-15. Important Note
+```
 
-NetworkPolicies only work if your CNI plugin supports them.
+Labels are critical because NetworkPolicies use labels for selecting Pods.
 
-Examples of CNIs that support NetworkPolicies:
+---
 
-Calico ✅
-Cilium ✅
-Weave Net ✅
+# 15. Important Note: CNI Support
 
-Some basic CNIs ignore NetworkPolicies completely.
+NetworkPolicies work only if your CNI plugin supports them.
 
-16. Common Mistakes
-Labels Don't Match
+Examples:
+
+| CNI | NetworkPolicy Support |
+|----|----|
+| Calico | ✅ |
+| Cilium | ✅ |
+| Weave Net | ✅ |
+
+Some basic networking plugins ignore NetworkPolicies.
+
+---
+
+# 16. Common Mistakes
+
+## Labels Don't Match
 
 Policy:
 
+```yaml
 matchLabels:
   app: backend
+```
 
 Pod:
 
+```yaml
 labels:
   app: api
+```
 
 Result:
 
-Policy never applies
-Forgetting Default Deny
+```text
+Policy does not apply
+```
 
-You create one allow rule but forget to block everything else.
+Always verify labels.
 
-Traffic may still be allowed unexpectedly.
+---
 
-No NetworkPolicy Support
+## Forgetting Default Deny
 
-If your CNI doesn't support NetworkPolicies:
+You create allow rules but forget to block other traffic.
 
-Policy exists
+Result:
 
-But:
+Unexpected communication may still be possible.
 
-Traffic still flows
-17. Interview Questions
-What is a NetworkPolicy?
+---
+
+## No NetworkPolicy Support
+
+The YAML exists:
+
+```text
+NetworkPolicy created ✅
+```
+
+But traffic still works:
+
+```text
+Traffic flows ❌
+```
+
+Reason:
+
+CNI does not support NetworkPolicies.
+
+---
+
+# 17. Interview Questions
+
+## What is a NetworkPolicy?
 
 A Kubernetes resource that controls network traffic to and from Pods.
 
-What are the two policy types?
+---
+
+## What are the two policy types?
+
+```text
 Ingress
 Egress
-What does podSelector do?
+```
 
-Selects the Pods the policy applies to.
+---
 
-What is a Default Deny policy?
+## What does podSelector do?
 
-A policy that blocks all traffic until explicit allow rules are added.
+It selects which Pods the NetworkPolicy applies to.
 
-Do NetworkPolicies affect Services?
+---
 
-No. They control traffic at the Pod level. Services still route traffic, but Pods will accept or reject it based on the applicable NetworkPolicies.
+## What is a Default Deny policy?
 
-Do all Kubernetes clusters support NetworkPolicies?
+A policy that blocks all traffic until explicit allow rules are created.
 
-No. Your CNI plugin must implement NetworkPolicy support.
+---
 
-LAB
-Task 1
+## Do NetworkPolicies affect Services?
 
-Create three Deployments:
+No.
 
+Services still route traffic, but Pods accept or reject traffic based on NetworkPolicy rules.
+
+---
+
+## Do all Kubernetes clusters support NetworkPolicies?
+
+No.
+
+The CNI plugin must support NetworkPolicy implementation.
+
+---
+
+# LAB: NetworkPolicy Practice
+
+## Task 1: Create Three Deployments
+
+Create:
+
+```text
 frontend
 backend
 database
+```
 
-Label them:
+Labels:
 
+```text
 app=frontend
 app=backend
 app=database
-Task 2
+```
+
+---
+
+## Task 2: Create Services
 
 Create a Service for each Deployment.
 
-Task 3
+---
 
-Create a NetworkPolicy that:
+## Task 3: Create Database NetworkPolicy
 
-Applies to app=database
-Allows ingress only from app=backend
-Task 4
+Requirements:
 
-Verify:
+- Apply policy to:
 
+```text
+app=database
+```
+
+- Allow ingress only from:
+
+```text
+app=backend
+```
+
+---
+
+## Task 4: Verify Policy
+
+Check policies:
+
+```bash
 kubectl get netpol
-kubectl describe netpol db-policy
-Task 5
+```
 
-Test connectivity:
+Describe:
+
+```bash
+kubectl describe netpol db-policy
+```
+
+---
+
+## Task 5: Test Connectivity
 
 From Backend Pod:
 
+```bash
 kubectl exec -it <backend-pod> -- sh
+```
 
-Try connecting to the database service.
+Test connection to the database service.
 
-Then test from the Frontend Pod and confirm that the connection is blocked.
+Then test from Frontend Pod.
 
-Architecture Learned So Far
+Expected:
+
+```text
+Backend → Database ✅
+
+Frontend → Database ❌
+```
+
+---
+
+# Kubernetes Architecture Learned So Far
+
+```text
 Cluster
     ↓
 Namespaces
@@ -444,5 +731,19 @@ Pods
 Services
     ↓
 Ingress
+```
 
-At this stage, you've covered nearly all the core Kubernetes objects and security concepts used in day-to-day production clusters.
+At this stage, you have covered almost all core Kubernetes objects and security concepts used in day-to-day production clusters.
+
+---
+
+# Summary
+
+- NetworkPolicies provide Pod-level network security.
+- They work like firewalls for Kubernetes workloads.
+- Use `podSelector` to target specific Pods.
+- Use Ingress rules to control incoming traffic.
+- Use Egress rules to control outgoing traffic.
+- Default Deny is a common production security pattern.
+- NetworkPolicies require CNI support.
+- Zero Trust networking means allowing only required communication.
