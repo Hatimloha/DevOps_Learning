@@ -1,0 +1,8 @@
+apiVersion: v1
+entries:
+  03-test:
+  - version: "0.1.0"
+    urls:
+      - https://example.com/charts/ecommerce-0.1.0.tgz
+
+generated: "2026-07-07T22:28:52.870286906+04:00"
