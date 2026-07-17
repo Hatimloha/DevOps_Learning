@@ -503,6 +503,3 @@ By the end of this lesson, you should understand:
 | Secrets | Securely store sensitive information |
 | Reusable Workflows | Share common CI/CD logic across repositories |
 | Conditional Execution | Run jobs only when specific conditions are met |
-
-
-.
