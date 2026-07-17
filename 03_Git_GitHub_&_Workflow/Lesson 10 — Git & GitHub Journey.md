@@ -497,3 +497,5 @@ By the end of this lesson, you should understand:
 | CI | Build and test automatically |
 | Continuous Delivery | Prepare releases automatically |
 | Continuous Deployment | Deploy automatically after successful tests |
+
+.
