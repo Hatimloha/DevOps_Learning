@@ -1,34 +1,72 @@
-Lesson 12 — Rollbacks & Release History
+# 🚀 Helm Tutorial — Lesson 12: Rollbacks & Release History
 
-This lesson is one of the most important production skills in Helm.
+> Learn how to inspect Helm release history, view deployed configurations, and safely roll back applications to previous working versions.
 
-No matter how carefully you deploy, failures happen:
+---
 
-A bad image
-A configuration mistake
-An application bug
-A failed database migration
+# 📚 Table of Contents
 
-Helm allows you to quickly return to a previously working version.
+- [Learning Objectives](#-learning-objectives)
+- [Why Rollbacks Matter](#-why-rollbacks-matter)
+- [What is a Revision?](#-what-is-a-revision)
+- [Viewing Installed Releases](#-viewing-installed-releases)
+- [Viewing Release History](#-viewing-release-history)
+- [Understanding Release Status](#-understanding-release-status)
+- [Viewing Release Status](#-viewing-release-status)
+- [Viewing Deployed Values](#-viewing-deployed-values)
+- [Viewing Rendered Manifests](#-viewing-rendered-manifests)
+- [Viewing Release Notes](#-viewing-release-notes)
+- [Rolling Back to a Previous Revision](#-rolling-back-to-a-previous-revision)
+- [What Happens During a Rollback?](#-what-happens-during-a-rollback)
+- [Verifying a Rollback](#-verifying-a-rollback)
+- [Rollback Options](#-rollback-options)
+- [Viewing Previous Revision Data](#-viewing-previous-revision-data)
+- [Production Rollback Workflow](#-production-rollback-workflow)
+- [Using `--atomic`](#-using---atomic)
+- [Common Production Commands](#-common-production-commands)
+- [Common Mistakes](#-common-mistakes)
+- [Hands-on Lab](#-hands-on-lab)
+- [Summary](#-summary)
+- [Interview Questions](#-interview-questions)
+- [Key Takeaways](#-key-takeaways)
 
-Learning Objectives
+---
 
-By the end of this lesson, you'll understand:
+# 🎯 Learning Objectives
 
-Release revisions
-helm history
-helm status
-helm rollback
-Rollback options
-Viewing release manifests
-Viewing release values
-Production rollback strategy
-What is a Revision?
+By the end of this lesson, you will be able to:
 
-Every successful install or upgrade creates a new revision.
+- ✅ Understand Helm release revisions
+- ✅ View release history using `helm history`
+- ✅ Check release status using `helm status`
+- ✅ Roll back releases using `helm rollback`
+- ✅ Use rollback options such as `--wait`, `--timeout`, and `--dry-run`
+- ✅ View deployed manifests and values
+- ✅ Follow production rollback strategies
+
+---
+
+# 🚨 Why Rollbacks Matter
+
+Even with careful testing, production deployments can fail because of:
+
+- Bad container images
+- Configuration mistakes
+- Application bugs
+- Failed database migrations
+- Infrastructure issues
+
+Instead of manually fixing everything, Helm allows you to quickly restore a previously working release.
+
+---
+
+# 🔢 What is a Revision?
+
+Every successful **install**, **upgrade**, or **rollback** creates a new revision.
 
 Example:
 
+```text
 Revision 1
 │
 ├── Image: nginx:1.27
@@ -47,163 +85,235 @@ Revision 3
 Revision 4
 │
 ├── ConfigMap Updated
+```
 
-Helm keeps track of each revision.
+Helm stores every revision, allowing you to inspect and restore previous deployments.
 
-Check Installed Releases
+---
+
+# 📋 Viewing Installed Releases
+
+Display installed releases:
+
+```bash
 helm list
+```
 
 Example:
 
+```text
 NAME         NAMESPACE   REVISION   STATUS     CHART
 ecommerce    default     4          deployed   ecommerce-0.1.0
+```
 
-Current revision:
+The current revision is:
 
+```text
 4
-View Release History
+```
+
+---
+
+# 📜 Viewing Release History
+
+Display the release history:
+
+```bash
 helm history ecommerce
+```
 
 Example:
 
-REVISION   UPDATED                  STATUS      CHART
-1          2026-07-01 09:30         deployed    ecommerce-0.1.0
-2          2026-07-01 10:00         superseded  ecommerce-0.1.0
-3          2026-07-01 11:00         superseded  ecommerce-0.1.0
-4          2026-07-01 12:00         deployed    ecommerce-0.1.0
-Status Meanings
-Status	Meaning
-deployed	Current active revision
-superseded	Replaced by a newer revision
-failed	Upgrade or install failed
-pending-install	Installation in progress
-pending-upgrade	Upgrade in progress
-pending-rollback	Rollback in progress
-uninstalled	Release removed
-View Release Status
+```text
+REVISION   UPDATED                  STATUS        CHART
+1          2026-07-01 09:30         deployed      ecommerce-0.1.0
+2          2026-07-01 10:00         superseded    ecommerce-0.1.0
+3          2026-07-01 11:00         superseded    ecommerce-0.1.0
+4          2026-07-01 12:00         deployed      ecommerce-0.1.0
+```
+
+This command shows every release revision and its current state.
+
+---
+
+# 📖 Understanding Release Status
+
+| Status | Meaning |
+|---------|---------|
+| `deployed` | Current active revision |
+| `superseded` | Replaced by a newer revision |
+| `failed` | Installation or upgrade failed |
+| `pending-install` | Installation is in progress |
+| `pending-upgrade` | Upgrade is in progress |
+| `pending-rollback` | Rollback is in progress |
+| `uninstalled` | Release has been removed |
+
+---
+
+# 📊 Viewing Release Status
+
+Check the current release:
+
+```bash
 helm status ecommerce
+```
 
 Example:
 
+```text
 NAME: ecommerce
 STATUS: deployed
 REVISION: 4
 NAMESPACE: default
+```
 
-This gives a quick summary of the current release.
+This provides a quick overview of the deployed release.
 
-View Values Used
+---
 
-Sometimes you forget which values were deployed.
+# 📄 Viewing Deployed Values
 
-Show user-supplied values:
+Sometimes you need to know which configuration was deployed.
 
+Display user-supplied values:
+
+```bash
 helm get values ecommerce
+```
 
 Example:
 
+```yaml
 replicaCount: 5
 
 image:
   tag: "2.6.0"
-Show All Values
+```
 
-Including defaults:
+---
 
+## View All Values
+
+Include default values as well:
+
+```bash
 helm get values ecommerce --all
+```
 
-Useful when debugging.
+This is useful for troubleshooting and auditing deployments.
 
-View Rendered Manifests
+---
+
+# 📜 Viewing Rendered Manifests
+
+Display the exact Kubernetes manifests deployed by Helm:
+
+```bash
 helm get manifest ecommerce
-
-Shows the exact YAML that Helm deployed.
+```
 
 Example:
 
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 ...
+```
 
-Great for troubleshooting.
+Useful when debugging live deployments.
 
-View Release Notes
+---
 
-If your chart includes release notes:
+# 📝 Viewing Release Notes
 
+If the chart contains release notes:
+
+```bash
 helm get notes ecommerce
+```
 
 Example:
 
+```text
 Application URL:
 
 http://my-app.example.com
-Roll Back to a Previous Revision
+```
 
-Suppose:
+---
 
+# 🔄 Rolling Back to a Previous Revision
+
+Suppose the history looks like this:
+
+```text
 Revision 1 → Stable
 
 Revision 2 → Stable
 
 Revision 3 → Broken
+```
 
-Current = Revision 3
+Current revision:
 
-Return to Revision 2:
+```text
+Revision 3
+```
 
+Restore Revision 2:
+
+```bash
 helm rollback ecommerce 2
+```
 
 Helm restores:
 
-Deployment
-Service
-ConfigMaps
-Secrets
-Any other managed resources
-What Happens Internally?
+- Deployment
+- Services
+- ConfigMaps
+- Secrets
+- Other Kubernetes resources managed by the release
+
+---
+
+# ⚙️ What Happens During a Rollback?
+
+Helm does **not** reactivate the old revision.
+
+Instead, it creates a **new revision** using the previous configuration.
+
+```text
 Revision 1
-
-↓
-
+      │
+      ▼
 Revision 2
-
-↓
-
+      │
+      ▼
 Revision 3 (Broken)
-
-↓
-
+      │
+      ▼
 helm rollback 2
+      │
+      ▼
+Revision 4
+(Same configuration as Revision 2)
+```
 
-↓
+This preserves a complete deployment history.
 
-Revision 4 (Same content as Revision 2)
+---
 
-Notice something important:
-
-Helm doesn't go back to Revision 2.
-
-Instead, it creates a new revision.
-
-History becomes:
-
-Revision	Status
-1	superseded
-2	superseded
-3	superseded
-4	deployed (rollback to revision 2)
-
-This preserves a complete audit trail.
-
-Verify Rollback
+# ✅ Verifying a Rollback
 
 Run:
 
+```bash
 helm history ecommerce
+```
 
-You'll see:
+Example:
 
+```text
 REVISION   STATUS
 
 1          superseded
@@ -213,208 +323,357 @@ REVISION   STATUS
 3          superseded
 
 4          deployed
+```
 
-Revision 4 contains the configuration from Revision 2.
+Revision **4** now contains the configuration from Revision **2**.
 
-Rollback with --wait
+---
+
+# ⚙️ Rollback Options
+
+## Wait Until Resources Are Ready
+
+```bash
 helm rollback ecommerce 2 \
     --wait
+```
 
-Helm waits until Pods are healthy before completing.
+Helm waits until Pods and other resources become healthy.
 
-Rollback with --timeout
+---
+
+## Set a Timeout
+
+```bash
 helm rollback ecommerce 2 \
     --wait \
     --timeout 10m
+```
 
-Wait up to 10 minutes for resources to become ready.
+Wait up to **10 minutes** before reporting failure.
 
-Rollback with --dry-run
+---
 
-Preview the rollback:
+## Preview the Rollback
 
+```bash
 helm rollback ecommerce 2 \
     --dry-run
+```
 
 No changes are applied.
 
-View Specific Revision Values
+Use this before performing production rollbacks.
 
-Compare deployed values:
+---
 
+# 📑 Viewing Previous Revision Data
+
+View values from a specific revision:
+
+```bash
 helm get values ecommerce --revision 2
+```
 
-Then compare with:
+Compare with another revision:
 
+```bash
 helm get values ecommerce --revision 4
+```
 
-Useful when auditing changes.
+Useful for auditing configuration changes.
 
-View Specific Revision Manifest
+---
+
+## View Previous Revision Manifest
+
+```bash
 helm get manifest ecommerce --revision 2
+```
 
-You can compare it with the current manifest to understand what changed.
+Compare it with the current manifest to identify what changed.
 
-Production Rollback Workflow
+---
+
+# 🏭 Production Rollback Workflow
+
+A recommended production workflow:
+
+```text
 Developer
-
-↓
-
+     │
+     ▼
 Deploy Revision 5
-
-↓
-
+     │
+     ▼
 Application Fails
-
-↓
-
+     │
+     ▼
 Check Status
-
-↓
-
+     │
+     ▼
 helm history
-
-↓
-
+     │
+     ▼
 Identify Stable Revision
-
-↓
-
+     │
+     ▼
 helm rollback
-
-↓
-
+     │
+     ▼
 Application Restored
-Using --atomic
+```
 
-Remember from Lesson 11:
+---
 
+# 🛡️ Using `--atomic`
+
+From Lesson 11:
+
+```bash
 helm upgrade ecommerce . \
     --atomic
+```
 
-If the upgrade fails:
+Workflow:
 
+```text
 Upgrade
-
-↓
-
+   │
+   ▼
 Failure
-
-↓
-
+   │
+   ▼
 Automatic Rollback
+```
 
-In many cases, you won't need to run helm rollback manually because --atomic already handled it.
+In many production deployments, manual rollback is unnecessary because `--atomic` automatically restores the previous working release.
 
-Common Production Commands
+---
 
-Check releases:
+# 🛠️ Common Production Commands
 
+### List Releases
+
+```bash
 helm list
+```
 
-History:
+---
 
+### View History
+
+```bash
 helm history ecommerce
+```
 
-Status:
+---
 
+### View Status
+
+```bash
 helm status ecommerce
+```
 
-Values:
+---
 
+### View Values
+
+```bash
 helm get values ecommerce
+```
 
-Manifest:
+---
 
+### View Manifests
+
+```bash
 helm get manifest ecommerce
+```
 
-Rollback:
+---
 
+### Roll Back
+
+```bash
 helm rollback ecommerce 3
-Common Mistakes
-❌ Rolling Back Without Checking History
+```
 
-Wrong:
+---
 
+# ❌ Common Mistakes
+
+## Rolling Back Without Checking History
+
+Incorrect:
+
+```bash
 helm rollback ecommerce 2
+```
 
-without knowing which revision is stable.
+Always verify which revision is stable:
 
-Always check:
-
+```bash
 helm history ecommerce
+```
 
-first.
+---
 
-❌ Assuming Rollback Deletes History
+## Assuming Rollback Deletes History
 
-It doesn't.
+Rollback **does not remove history**.
 
-Every rollback creates a new revision.
+Every rollback creates a new revision, preserving a complete audit trail.
 
-History is always preserved.
+---
 
-❌ Forgetting --wait
+## Forgetting `--wait`
 
-Use:
+Recommended:
 
+```bash
 helm rollback ecommerce 2 --wait
+```
 
-to ensure resources become ready before considering the rollback successful.
+This ensures resources are healthy before the rollback completes.
 
-❌ Assuming Database Changes Are Reverted
+---
 
-Helm manages Kubernetes resources, not your database contents.
+## Assuming Database Changes Are Reverted
 
-If Revision 3 ran a migration that changed database data, a Helm rollback does not automatically undo that migration.
+Helm only manages Kubernetes resources.
 
-Database rollback strategies should be handled separately.
+It **does not** automatically undo:
 
-Hands-on Lab
+- Database schema changes
+- Database migrations
+- Application data modifications
+
+Database rollback strategies must be handled separately.
+
+---
+
+# 🧪 Hands-on Lab
+
 Install your chart:
+
+```bash
 helm install ecommerce .
-Change:
+```
+
+Update the image:
+
+```yaml
 image:
   tag: "2.0"
+```
+
 Upgrade:
+
+```bash
 helm upgrade ecommerce .
-Change:
+```
+
+Update the replica count:
+
+```yaml
 replicaCount: 5
+```
+
 Upgrade again:
+
+```bash
 helm upgrade ecommerce .
+```
+
 View history:
+
+```bash
 helm history ecommerce
+```
+
 Roll back to Revision 2:
+
+```bash
 helm rollback ecommerce 2 --wait
+```
+
 Verify:
+
+```bash
 helm history ecommerce
-Inspect the deployed values:
+```
+
+Inspect deployed values:
+
+```bash
 helm get values ecommerce --all
-Summary
-Command	Purpose
-helm history	Show release revision history
-helm status	Show current release status
-helm get values	Display deployed values
-helm get manifest	Show rendered manifests
-helm get notes	Show release notes
-helm rollback	Roll back to a previous revision
-Interview Questions
-1. What is a Helm revision?
+```
 
-A numbered version of a Helm release created after each successful install, upgrade, or rollback.
+---
 
-2. Does a rollback remove release history?
+# 📋 Summary
 
-No. A rollback creates a new revision while preserving all previous revisions.
+| Command | Purpose |
+|----------|---------|
+| `helm history` | Show release revision history |
+| `helm status` | Display current release status |
+| `helm get values` | Show deployed values |
+| `helm get manifest` | Display deployed Kubernetes manifests |
+| `helm get notes` | Show release notes |
+| `helm rollback` | Restore a previous release revision |
 
-3. Which command shows release history?
+---
+
+# 🎤 Interview Questions
+
+### 1. What is a Helm revision?
+
+> A Helm revision is a numbered version of a release created after every successful install, upgrade, or rollback.
+
+---
+
+### 2. Does a rollback remove release history?
+
+> No. Every rollback creates a new revision while preserving all previous revisions.
+
+---
+
+### 3. Which command displays release history?
+
+```bash
 helm history <release-name>
-4. How do you roll back to Revision 3?
+```
+
+---
+
+### 4. How do you roll back to Revision 3?
+
+```bash
 helm rollback <release-name> 3
-5. What is the purpose of helm get manifest?
+```
 
-It displays the exact Kubernetes manifests that Helm deployed.
+---
 
-6. Does Helm rollback undo database schema or data changes?
+### 5. What is the purpose of `helm get manifest`?
 
-No. It only restores Kubernetes resources managed by the release.
+> It displays the exact Kubernetes manifests deployed by Helm for a release.
+
+---
+
+### 6. Does `helm rollback` undo database schema or data changes?
+
+> No. Helm only restores Kubernetes resources managed by the release. Database schema changes and data migrations must be rolled back separately.
+
+---
+
+# 📌 Key Takeaways
+
+- Every install, upgrade, and rollback creates a new Helm revision.
+- `helm history` provides a complete audit trail of all release revisions.
+- `helm status` shows the current deployment state.
+- `helm get values`, `helm get manifest`, and `helm get notes` help inspect deployed releases.
+- `helm rollback` restores a previous configuration by creating a new revision.
+- Always verify release history before performing a rollback.
+- Use `--wait` during rollbacks to ensure workloads become healthy before considering the operation successful.
+- Helm rollbacks restore Kubernetes resources but do **not** reverse database schema or data changes.

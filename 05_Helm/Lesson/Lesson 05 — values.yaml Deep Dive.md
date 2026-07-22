@@ -1,76 +1,107 @@
-Lesson 5 — values.yaml Deep Dive
+# 🚀 Helm Tutorial — Lesson 5: `values.yaml` Deep Dive
 
-This is one of the most important Helm lessons.
+> Learn how `values.yaml` makes Helm Charts reusable across multiple environments by separating configuration from templates.
 
-In real companies, you rarely modify templates when deploying to different environments. Instead, you keep the templates the same and only change the values.
+---
 
-One Chart → Multiple Environments
+# 📚 Table of Contents
 
-Learning Objectives
+- [Learning Objectives](#-learning-objectives)
+- [Why `values.yaml` Exists](#-why-valuesyaml-exists)
+- [Helm's Solution](#-helms-solution)
+- [Default `values.yaml`](#-default-valuesyaml)
+- [Override Values Using `--set`](#-override-values-using---set)
+- [Using Another Values File](#-using-another-values-file)
+- [Using Multiple Values Files](#-using-multiple-values-files)
+- [Value Precedence](#-value-precedence)
+- [Working with Nested Values](#-working-with-nested-values)
+- [Working with Lists](#-working-with-lists)
+- [Working with Maps](#-working-with-maps)
+- [Environment-Based Configuration](#-environment-based-configuration)
+- [Real-World Example](#-real-world-example)
+- [Best Practices](#-best-practices)
+- [Hands-on Lab](#-hands-on-lab)
+- [Interview Questions](#-interview-questions)
+- [Key Takeaways](#-key-takeaways)
 
-By the end of this lesson, you'll understand:
+---
 
-What values.yaml is
-How Helm loads values
-How to override values
---set
--f / --values
-Multiple values files
-Value precedence
-Production best practices
-Why values.yaml Exists
+# 🎯 Learning Objectives
 
-Suppose your deployment looks like this:
+By the end of this lesson, you will be able to:
 
+- ✅ Understand the purpose of `values.yaml`
+- ✅ Learn how Helm loads configuration values
+- ✅ Override values using `--set`
+- ✅ Use custom values files with `-f` or `--values`
+- ✅ Work with multiple values files
+- ✅ Understand Helm value precedence
+- ✅ Apply production-ready configuration practices
+
+---
+
+# 📖 Why `values.yaml` Exists
+
+Suppose your Kubernetes Deployment contains:
+
+```yaml
 replicas: 2
+
 image: nginx:1.27
+
 service:
   type: ClusterIP
+```
 
-Now Production needs:
+Now your production environment requires:
 
+```yaml
 replicas: 10
+
 image: nginx:1.28
+
 service:
   type: LoadBalancer
+```
 
-Without Helm:
+Without Helm, you would need to edit the Deployment YAML every time you deploy to a different environment.
 
-You edit the Deployment YAML.
+This approach becomes difficult to maintain and is prone to errors.
 
-Again.
+---
 
-And again.
+# 💡 Helm's Solution
 
-For every environment.
-
-That's error-prone.
-
-Helm's Solution
-
-Keep the template generic.
+Helm separates **configuration** from **templates**.
 
 Template:
 
+```yaml
 spec:
   replicas: {{ .Values.replicaCount }}
+```
 
-Development:
+Development configuration:
 
+```yaml
 replicaCount: 2
+```
 
-Production:
+Production configuration:
 
+```yaml
 replicaCount: 10
+```
 
-Same template.
+The template never changes—only the values do.
 
-Different values.
+---
 
-Default values.yaml
+# 📄 Default `values.yaml`
 
 Example:
 
+```yaml
 replicaCount: 2
 
 image:
@@ -80,74 +111,110 @@ image:
 service:
   type: ClusterIP
   port: 80
+```
 
 Template:
 
+```yaml
 replicas: {{ .Values.replicaCount }}
 
 image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+```
 
-Output:
+Rendered output:
 
+```yaml
 replicas: 2
 
 image: nginx:latest
-Override Using --set
+```
 
-Instead of editing values.yaml:
+---
 
+# ⚙️ Override Values Using `--set`
+
+Instead of editing `values.yaml`, you can override values directly from the command line.
+
+Example:
+
+```bash
 helm template demo . \
   --set replicaCount=5
+```
 
-Output:
+Rendered output:
 
+```yaml
 replicas: 5
+```
 
-Nothing inside values.yaml changes.
+The original `values.yaml` file remains unchanged.
 
-Override nested values:
+---
 
+## Override Nested Values
+
+```bash
 helm template demo . \
   --set image.tag=1.28
+```
 
 Output:
 
+```yaml
 image: nginx:1.28
+```
 
-Multiple values:
+---
 
+## Override Multiple Values
+
+```bash
 helm template demo . \
   --set replicaCount=4,image.tag=1.29
+```
 
-Result:
+Rendered output:
 
+```yaml
 replicas: 4
 
 image: nginx:1.29
-Why --set Exists
+```
 
-Useful for:
+---
 
-Quick testing
-CI/CD pipelines
-One-time deployments
-Automation scripts
+## When Should You Use `--set`?
 
-Not ideal for large configurations.
+Ideal for:
 
-Using Another Values File
+- Quick testing
+- CI/CD pipelines
+- One-time deployments
+- Automation scripts
 
-Create:
+> **Note:** Avoid using large `--set` commands for production deployments.
 
-values-dev.yaml
+---
+
+# 📂 Using Another Values File
+
+Create a development configuration:
+
+### `values-dev.yaml`
+
+```yaml
 replicaCount: 1
 
 image:
   tag: dev
+```
 
-Create:
+Create a production configuration:
 
-values-prod.yaml
+### `values-prod.yaml`
+
+```yaml
 replicaCount: 8
 
 image:
@@ -155,245 +222,329 @@ image:
 
 service:
   type: LoadBalancer
+```
 
-Render Development:
+Render the development configuration:
 
+```bash
 helm template demo . -f values-dev.yaml
+```
 
-Render Production:
+Render the production configuration:
 
+```bash
 helm template demo . -f values-prod.yaml
+```
 
-No template changes required.
+The templates remain unchanged while the configuration changes.
 
-Multiple Values Files
+---
 
-Helm allows multiple files.
+# 📚 Using Multiple Values Files
+
+Helm can merge multiple values files.
 
 Example:
 
+```bash
 helm template demo . \
   -f values.yaml \
   -f values-prod.yaml
+```
 
-The second file overrides the first.
+The second file overrides values from the first.
 
-Example:
+### Example
 
-Default:
+Default values:
 
+```yaml
 replicaCount: 2
 
 image:
   tag: latest
+```
 
-Production:
+Production overrides:
 
+```yaml
 replicaCount: 8
+```
 
-Final output:
+Final rendered output:
 
+```yaml
 replicas: 8
 
 image: nginx:latest
+```
 
-Only overridden fields change.
+Only the overridden values change.
 
-Value Precedence
+---
 
-This is frequently asked in interviews.
+# 🏆 Value Precedence
 
-Suppose:
+This is a very common interview question.
 
-values.yaml
+Suppose the default configuration contains:
 
+```yaml
 replicaCount: 2
+```
 
-values-prod.yaml
+Production values:
 
+```yaml
 replicaCount: 5
+```
 
 Command:
 
+```bash
 helm template demo . \
   -f values-prod.yaml \
   --set replicaCount=10
+```
 
-Final result:
+Final output:
 
+```yaml
 replicas: 10
+```
 
-Because Helm follows this order:
+Helm applies values in the following order:
 
+```text
 Lowest Priority
         │
         ▼
 values.yaml
         │
         ▼
--f values-prod.yaml
+Custom values files (-f)
         │
         ▼
 --set
+        │
+        ▼
 Highest Priority
-Nested Values
+```
 
-Example:
+---
 
+# 📂 Working with Nested Values
+
+Example configuration:
+
+```yaml
 database:
   host: mysql
   port: 3306
+```
 
 Template:
 
+```yaml
 host: {{ .Values.database.host }}
 
 port: {{ .Values.database.port }}
+```
 
-Override:
+Override the host:
 
+```bash
 helm template demo . \
   --set database.host=postgres
+```
 
-Output:
+Rendered output:
 
+```yaml
 host: postgres
-Lists
+```
+
+---
+
+# 📋 Working with Lists
 
 Example:
 
+```yaml
 ports:
   - 80
   - 443
+```
 
-Access:
+Access list elements:
 
+```gotemplate
 {{ index .Values.ports 0 }}
+```
 
+```gotemplate
 {{ index .Values.ports 1 }}
+```
 
-Output:
+Rendered output:
 
+```text
 80
+```
 
+```text
 443
+```
 
-We'll learn loops in the next lesson, which make working with lists much easier.
+> **Note:** In the next lesson, you'll learn how to iterate through lists using loops (`range`).
 
-Maps
+---
+
+# 🗂️ Working with Maps
 
 Example:
 
+```yaml
 labels:
   app: nginx
   env: production
+```
 
-Access:
+Access map values:
 
+```gotemplate
 {{ .Values.labels.app }}
+```
 
+```gotemplate
 {{ .Values.labels.env }}
+```
 
-Output:
+Rendered output:
 
+```text
 nginx
+```
 
+```text
 production
-Environment Structure
+```
 
-A common production setup:
+---
 
+# 🌍 Environment-Based Configuration
+
+A common production structure:
+
+```text
 my-chart/
-
 ├── values.yaml
 ├── values-dev.yaml
 ├── values-stage.yaml
 ├── values-prod.yaml
+```
 
-Deploy:
+Deploy to different environments using the same chart.
 
-Development:
+### Development
 
+```bash
 helm install app-dev . \
   -f values-dev.yaml
+```
 
-Staging:
+### Staging
 
+```bash
 helm install app-stage . \
   -f values-stage.yaml
+```
 
-Production:
+### Production
 
+```bash
 helm install app-prod . \
   -f values-prod.yaml
+```
 
-Same chart.
+One chart, multiple environments.
 
-Different configuration.
+---
 
-Real Company Example
+# 🏢 Real-World Example
 
-Suppose your application has:
+Development configuration:
 
-Development:
-
-replicas: 1
+```yaml
+replicaCount: 1
 
 image:
   tag: dev
 
 service:
   type: ClusterIP
+```
 
-Production:
+Production configuration:
 
-replicas: 20
+```yaml
+replicaCount: 20
 
 image:
   tag: "2.5.1"
 
 service:
   type: LoadBalancer
+```
 
-Templates remain unchanged.
+The Helm templates remain exactly the same.
 
-Only the values file changes.
+Only the configuration changes.
 
-Best Practices
+---
 
-✅ Keep templates generic.
+# ✅ Best Practices
 
-✅ Put all configurable values in values.yaml.
+- Keep templates generic and reusable.
+- Store configurable settings in `values.yaml`.
+- Use dedicated values files for each environment.
+- Avoid large `--set` commands in production.
+- Use meaningful filenames such as:
+  - `values-dev.yaml`
+  - `values-stage.yaml`
+  - `values-prod.yaml`
 
-✅ Use separate values files for each environment.
+---
 
-✅ Avoid large --set commands for production.
+# 🧪 Hands-on Lab
 
-✅ Use meaningful names:
+Create the following configuration files.
 
-values-dev.yaml
-values-stage.yaml
-values-prod.yaml
-Hands-on Lab
+### `values-dev.yaml`
 
-Create three files:
-
-values-dev.yaml
-
+```yaml
 replicaCount: 1
 
 image:
   tag: dev
+```
 
-values-stage.yaml
+---
 
+### `values-stage.yaml`
+
+```yaml
 replicaCount: 3
 
 image:
   tag: stage
+```
 
-values-prod.yaml
+---
 
+### `values-prod.yaml`
+
+```yaml
 replicaCount: 6
 
 image:
@@ -401,60 +552,104 @@ image:
 
 service:
   type: LoadBalancer
+```
 
-Now compare:
+Compare the rendered output.
 
-Default:
+### Default Configuration
 
+```bash
 helm template demo .
+```
 
-Development:
+---
 
+### Development Configuration
+
+```bash
 helm template demo . \
   -f values-dev.yaml
+```
 
-Production:
+---
 
+### Production Configuration
+
+```bash
 helm template demo . \
   -f values-prod.yaml
+```
 
-Finally test precedence:
+Test value precedence:
 
+```bash
 helm template demo . \
   -f values-prod.yaml \
   --set replicaCount=12
+```
 
-Observe that the rendered Deployment uses:
+Verify the rendered Deployment contains:
 
+```yaml
 replicas: 12
+```
 
-because --set has the highest priority.
+because `--set` has the highest priority.
 
-Common Interview Questions
-1. What is the purpose of values.yaml?
+---
 
-It stores the default configuration values used by Helm templates.
+# 🎯 Interview Questions
 
-2. How do you override values without editing values.yaml?
+### 1. What is the purpose of `values.yaml`?
+
+> It stores the default configuration values that Helm templates use during rendering.
+
+---
+
+### 2. How can you override values without editing `values.yaml`?
 
 Using:
 
+```bash
 --set
+```
 
 or
 
+```bash
 -f custom-values.yaml
-3. What is the precedence order in Helm?
+```
 
-From lowest to highest:
+---
 
-values.yaml
-Files specified with -f (processed left to right; later files override earlier ones)
---set
-4. Why use separate values files?
+### 3. What is the value precedence order in Helm?
 
-To deploy the same chart to different environments with different configurations.
+From **lowest** to **highest** priority:
 
-5. Should production deployments rely heavily on --set?
+1. `values.yaml`
+2. Values files specified with `-f` (processed left to right; later files override earlier ones)
+3. `--set`
 
-Generally no. Production deployments are easier to review, version-control, and reproduce when using dedicated values files. --set is great for quick overrides and automation.
+---
+
+### 4. Why use separate values files?
+
+> Separate values files allow the same Helm Chart to be deployed across multiple environments with different configurations.
+
+---
+
+### 5. Should production deployments rely heavily on `--set`?
+
+> Generally, no. Production deployments are easier to review, version-control, and reproduce when using dedicated values files. `--set` is best suited for quick overrides, testing, and automation.
+
+---
+
+# 📌 Key Takeaways
+
+- `values.yaml` stores the default configuration for a Helm Chart.
+- Templates remain unchanged while configuration varies by environment.
+- `--set` provides quick command-line overrides.
+- The `-f` option allows environment-specific configuration files.
+- Multiple values files can be merged, with later files overriding earlier ones.
+- `--set` always has the highest precedence.
+- Production deployments should use dedicated values files for maintainability and version control.

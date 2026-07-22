@@ -1,40 +1,73 @@
-Lesson 20 — Library Charts & Reusable Templates
+````md id="l20h8w"
+# 🚀 Helm Tutorial — Lesson 20: Library Charts & Reusable Templates
 
-As your organization grows, you'll likely have many Helm charts:
+> Learn how **Library Charts** help eliminate duplicate template code across multiple Helm Charts. They provide reusable helper templates for labels, annotations, naming, images, resources, and other shared logic, making large-scale Helm deployments easier to maintain.
 
-frontend
-backend
-auth-service
-payment-service
-notification-service
+---
 
-Without reusable templates, every chart duplicates the same labels, annotations, naming logic, and helper functions.
+# 📚 Table of Contents
 
-Library Charts solve this problem by providing shared templates that other charts can reuse.
+- [Learning Objectives](#-learning-objectives)
+- [The Problem with Duplicate Templates](#-the-problem-with-duplicate-templates)
+- [What is a Library Chart?](#-what-is-a-library-chart)
+- [Application Chart vs Library Chart](#-application-chart-vs-library-chart)
+- [Creating a Library Chart](#-creating-a-library-chart)
+- [Typical Library Chart Structure](#-typical-library-chart-structure)
+- [Creating Reusable Templates](#-creating-reusable-templates)
+- [Using a Library Chart](#-using-a-library-chart)
+- [Adding a Library Chart as a Dependency](#-adding-a-library-chart-as-a-dependency)
+- [Reusable Naming Functions](#-reusable-naming-functions)
+- [Reusable Image Functions](#-reusable-image-functions)
+- [Reusable Resource Templates](#-reusable-resource-templates)
+- [Reusable Labels](#-reusable-labels)
+- [Enterprise Example](#-enterprise-example)
+- [Library Charts in CI/CD](#-library-charts-in-cicd)
+- [Best Practices](#-best-practices)
+- [Common Mistakes](#-common-mistakes)
+- [Hands-on Lab](#-hands-on-lab)
+- [Summary](#-summary)
+- [Interview Questions](#-interview-questions)
+- [Key Takeaways](#-key-takeaways)
 
-Learning Objectives
+---
 
-By the end of this lesson, you'll understand:
+# 🎯 Learning Objectives
 
-What Library Charts are
-Application Chart vs Library Chart
-Creating a Library Chart
-Using reusable helper templates
-Sharing labels and annotations
-Using library charts as dependencies
-Production best practices
-The Problem
+By the end of this lesson, you will be able to:
 
-Suppose you have three charts:
+- ✅ Understand what Library Charts are
+- ✅ Differentiate between Application Charts and Library Charts
+- ✅ Create a Library Chart
+- ✅ Build reusable helper templates
+- ✅ Share labels, annotations, names, and resources
+- ✅ Use Library Charts as dependencies
+- ✅ Apply production-ready best practices
 
+---
+
+# 🚨 The Problem with Duplicate Templates
+
+As organizations grow, they often manage many Helm Charts.
+
+Example:
+
+```text
 frontend/
 
 backend/
 
 payment/
 
-Each chart contains:
+notification/
 
+auth-service/
+```
+
+Each chart contains nearly identical template code.
+
+Example:
+
+```yaml
 labels:
 
   app.kubernetes.io/name: ...
@@ -42,117 +75,159 @@ labels:
   app.kubernetes.io/version: ...
 
   app.kubernetes.io/managed-by: Helm
-
-The same code is copied into every chart.
+```
 
 Problems:
 
-Hard to maintain
-Easy to make inconsistent
-Repeated code
-What is a Library Chart?
+- ❌ Duplicate code
+- ❌ Difficult maintenance
+- ❌ Inconsistent implementations
+- ❌ Higher chance of errors
 
-A Library Chart contains only reusable templates.
+---
 
-It does not create Kubernetes resources.
+# 📚 What is a Library Chart?
+
+A **Library Chart** contains **only reusable template logic**.
+
+It **does not create Kubernetes resources**.
 
 Think of it as a shared utility package.
 
+```text
 Application Charts
-
-↓
-
-Use
-
-↓
-
+        │
+        ▼
+Use Shared Templates
+        │
+        ▼
 Library Chart
+```
 
-↓
+Instead of copying template code into every application chart, all charts reuse the same helpers.
 
-Shared Templates
-Application Chart vs Library Chart
-Application Chart	Library Chart
-Creates Deployments	❌ No
-Creates Services	❌ No
-Creates ConfigMaps	❌ No
-Contains helper templates	✅ Yes
-Can be installed	✅ Yes
+---
 
-A library chart cannot be installed directly.
+# ⚖️ Application Chart vs Library Chart
 
-Create a Library Chart
+| Feature | Application Chart | Library Chart |
+|----------|-------------------|---------------|
+| Creates Deployments | ✅ | ❌ |
+| Creates Services | ✅ | ❌ |
+| Creates ConfigMaps | ✅ | ❌ |
+| Contains Helper Templates | ✅ | ✅ |
+| Can Be Installed as an Application | ✅ | ❌ |
+
+> **Note:** A Library Chart cannot be installed by itself because it does not define deployable Kubernetes resources.
+
+---
+
+# 🏗️ Creating a Library Chart
+
+Create a new chart:
+
+```bash
 helm create common
+```
 
 Open:
 
+```text
 Chart.yaml
+```
 
 Change:
 
+```yaml
 type: application
+```
 
 to:
 
+```yaml
 type: library
+```
 
-Now Helm treats it as a reusable library.
+Helm now recognizes it as a reusable library.
 
-Typical Structure
-common/
+---
 
-├── Chart.yaml
-
-└── templates/
-
-    ├── _helpers.tpl
-
-    ├── _labels.tpl
-
-    ├── _annotations.tpl
-
-    └── _images.tpl
-
-Notice:
-
-There are no Deployment or Service YAML files.
-
-Creating a Reusable Template
+# 📁 Typical Library Chart Structure
 
 Example:
 
-templates/_labels.tpl
+```text
+common/
 
+├── Chart.yaml
+└── templates/
+    ├── _helpers.tpl
+    ├── _labels.tpl
+    ├── _annotations.tpl
+    └── _images.tpl
+```
+
+Notice:
+
+- No Deployments
+- No Services
+- No ConfigMaps
+- No Ingress resources
+
+Only reusable template definitions are stored.
+
+---
+
+# 📝 Creating Reusable Templates
+
+Example:
+
+`templates/_labels.tpl`
+
+```go
 {{- define "common.labels" -}}
 
 app.kubernetes.io/managed-by: Helm
-
 app.kubernetes.io/instance: {{ .Release.Name }}
-
 app.kubernetes.io/version: {{ .Chart.AppVersion }}
 
 {{- end }}
-Using the Library
+```
 
-Parent chart:
+This helper can now be reused by any chart that depends on the library.
 
+---
+
+# 🔄 Using a Library Chart
+
+Application chart:
+
+```yaml
 metadata:
 
   labels:
-
 {{ include "common.labels" . | nindent 4 }}
+```
 
-Output:
+Rendered output:
 
+```yaml
 metadata:
   labels:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/instance: ecommerce
     app.kubernetes.io/version: "2.1.0"
-Add Library as Dependency
+```
 
-Chart.yaml
+Every chart receives identical labels.
 
+---
+
+# 📦 Adding a Library Chart as a Dependency
+
+Declare the dependency in `Chart.yaml`.
+
+```yaml
 dependencies:
 
 - name: common
@@ -160,97 +235,146 @@ dependencies:
   version: "1.0.0"
 
   repository: "file://../common"
+```
 
-Download:
+Download the dependency:
 
+```bash
 helm dependency build
+```
 
-Now every template can use:
-
-{{ include "common.labels" . }}
-Reusable Naming Function
+The helper templates are now available.
 
 Example:
 
+```go
+{{ include "common.labels" . }}
+```
+
+---
+
+# 🏷️ Reusable Naming Functions
+
+Example helper:
+
+```go
 {{- define "common.fullname" -}}
 
 {{ printf "%s-%s" .Release.Name .Chart.Name }}
 
 {{- end }}
+```
 
 Usage:
 
+```yaml
 metadata:
-
-  name:
-{{ include "common.fullname" . }}
+  name: {{ include "common.fullname" . }}
+```
 
 Output:
 
+```text
 demo-ecommerce
-Reusable Image Function
+```
+
+This ensures consistent naming across all charts.
+
+---
+
+# 🖼️ Reusable Image Functions
 
 Example:
 
+```go
 {{- define "common.image" -}}
 
 {{ .Values.image.repository }}:{{ .Values.image.tag }}
 
 {{- end }}
+```
 
-Deployment:
+Usage:
 
-image:
-{{ include "common.image" . }}
-Reusable Resources
+```yaml
+image: {{ include "common.image" . }}
+```
+
+This centralizes image formatting logic.
+
+---
+
+# ⚙️ Reusable Resource Templates
 
 Instead of repeating:
 
+```yaml
 resources:
 
   limits:
-
     cpu: 500m
-
     memory: 512Mi
+```
 
-Create:
+Create a reusable helper:
 
+```go
 {{- define "common.resources" -}}
 
 {{ toYaml .Values.resources }}
 
 {{- end }}
+```
 
-Then:
+Usage:
 
+```yaml
 resources:
-
 {{ include "common.resources" . | nindent 2 }}
-Reusable Labels
+```
+
+This keeps resource configuration consistent across services.
+
+---
+
+# 🏷️ Reusable Labels
 
 Instead of writing:
 
+```yaml
 labels:
-
   app: frontend
-labels:
+```
 
+```yaml
+labels:
   app: backend
-labels:
+```
 
+```yaml
+labels:
   app: payment
+```
 
 Use:
 
+```go
 {{ include "common.labels" . }}
+```
 
-Every chart stays consistent.
+Benefits:
 
-Enterprise Example
+- Consistent labels
+- Easier maintenance
+- Reduced duplication
 
-Company structure:
+---
 
+# 🏢 Enterprise Example
+
+Typical company structure:
+
+```text
 company-common/
 
 frontend/
@@ -262,206 +386,320 @@ payment/
 analytics/
 
 notification/
+```
 
-Every application depends on:
+Dependency relationship:
 
+```text
+Application Charts
+        │
+        ▼
 company-common
+        │
+        ▼
+Shared Templates
+```
 
-One update in the library benefits all charts after they update the dependency.
+Updating the library automatically benefits every application after updating its dependency version.
 
-Library Charts in CI/CD
+---
 
-Pipeline:
+# 🚀 Library Charts in CI/CD
 
-Update Library
+Typical workflow:
 
-↓
-
+```text
+Update Library Chart
+        │
+        ▼
 Release v1.2.0
-
-↓
-
+        │
+        ▼
 Application Updates Dependency
-
-↓
-
+        │
+        ▼
 helm dependency update
-
-↓
-
+        │
+        ▼
 Deploy
-Best Practices
-Keep Only Reusable Logic
+```
+
+This promotes centralized template management across teams.
+
+---
+
+# ✅ Best Practices
+
+## Keep Only Reusable Logic
 
 Library charts should contain:
 
-Labels
-Names
-Images
-Selectors
-Resources
-Helper functions
+- Labels
+- Names
+- Selectors
+- Image helpers
+- Resource helpers
+- Common annotations
+- Shared template functions
 
-Avoid application-specific resources.
+Avoid application-specific Kubernetes resources.
 
-Prefix Template Names
+---
+
+## Prefix Template Names
 
 Good:
 
+```go
 common.labels
+```
 
 Avoid:
 
+```go
 labels
+```
 
-Prefixes reduce naming collisions.
+Prefixes prevent naming collisions when multiple libraries are used.
 
-Version Library Charts
+---
 
-Treat library charts like any other dependency.
+## Version Library Charts
 
-Update versions when shared logic changes.
+Treat Library Charts like any other dependency.
 
-Document Shared Templates
+Increment versions whenever shared logic changes.
+
+---
+
+## Document Shared Templates
 
 Describe:
 
-Expected input
-Output
-Required values
+- Expected input
+- Output
+- Required values
+- Usage examples
 
-This makes them easier for teams to use.
+Well-documented libraries are easier for teams to adopt.
 
-Common Mistakes
-❌ Putting Deployments in a Library Chart
+---
 
-Library charts should not define resources like:
+## Reuse Instead of Copying
 
+Whenever multiple charts share the same logic, move it into the library chart instead of duplicating it.
+
+---
+
+# ❌ Common Mistakes
+
+## Putting Deployments Inside a Library Chart
+
+Incorrect:
+
+```yaml
 kind: Deployment
+```
 
-Their purpose is reusable logic only.
+Library Charts should contain reusable template logic only.
 
-❌ Forgetting type: library
+---
 
-If Chart.yaml uses:
+## Forgetting `type: library`
 
+Incorrect:
+
+```yaml
 type: application
+```
 
-Helm treats it as a normal installable chart.
+Correct:
 
-❌ Using Generic Template Names
-
-Bad:
-
-labels
-
-Good:
-
-common.labels
-❌ Copying Instead of Reusing
-
-If multiple charts share the same template code, move it into the library chart instead of duplicating it.
-
-Hands-on Lab
-Step 1
-
-Create a library chart:
-
-helm create common
-Step 2
-
-Edit:
-
-Chart.yaml
+```yaml
 type: library
-Step 3
+```
 
-Delete generated Kubernetes manifests:
+Otherwise Helm treats it as a normal application chart.
 
-templates/
+---
 
-Deployment
+## Using Generic Template Names
 
-Service
+Avoid:
 
-Ingress
+```go
+labels
+```
 
-ServiceAccount
+Prefer:
 
-HPA
+```go
+common.labels
+```
+
+This reduces naming conflicts.
+
+---
+
+## Copying Instead of Reusing
+
+If multiple charts contain identical helper templates, move them into the Library Chart.
+
+---
+
+# 🧪 Hands-on Lab
+
+## Step 1 — Create a Library Chart
+
+```bash
+helm create common
+```
+
+---
+
+## Step 2 — Convert It into a Library
+
+Edit `Chart.yaml`.
+
+```yaml
+type: library
+```
+
+---
+
+## Step 3 — Remove Generated Resources
+
+Delete generated manifests such as:
+
+- Deployment
+- Service
+- Ingress
+- ServiceAccount
+- HorizontalPodAutoscaler (HPA)
 
 Keep only helper templates.
 
-Step 4
+---
+
+## Step 4 — Create Shared Labels
 
 Create:
 
+```text
 templates/_labels.tpl
+```
+
+```go
 {{- define "common.labels" -}}
 
 app.kubernetes.io/name: {{ .Chart.Name }}
-
 app.kubernetes.io/instance: {{ .Release.Name }}
 
 {{- end }}
-Step 5
+```
 
-Add the library chart as a dependency:
+---
 
+## Step 5 — Add the Library as a Dependency
+
+```yaml
 dependencies:
 
 - name: common
   version: "1.0.0"
   repository: "file://../common"
-Step 6
+```
 
-Run:
+---
 
+## Step 6 — Build Dependencies
+
+```bash
 helm dependency build
-Step 7
+```
 
-Use the shared labels:
+---
 
+## Step 7 — Use the Shared Labels
+
+```yaml
 metadata:
   labels:
 {{ include "common.labels" . | nindent 4 }}
+```
 
 Render the chart:
 
+```bash
 helm template demo .
+```
 
-Verify that the labels appear correctly.
+Verify that the shared labels appear correctly in the rendered manifests.
 
-Summary
-Concept	Purpose
-Library Chart	Shares reusable templates
-type: library	Marks a chart as a library
-include	Imports shared templates
-_helpers.tpl	Stores helper templates
-helm dependency build	Downloads/builds library dependencies
-Interview Questions
-1. What is a Helm Library Chart?
+---
 
-A chart that provides reusable templates and helper functions but does not create Kubernetes resources.
+# 📋 Summary
 
-2. Can you install a library chart directly?
+| Concept | Purpose |
+|----------|---------|
+| Library Chart | Share reusable template logic |
+| `type: library` | Mark a chart as a Library Chart |
+| `include` | Render reusable helper templates |
+| `_helpers.tpl` | Store reusable helper functions |
+| `helm dependency build` | Download/build Library Chart dependencies |
 
-No. It is intended to be used as a dependency by application charts.
+---
 
-3. How do you declare a library chart?
+# 🎤 Interview Questions
 
-Set the following in Chart.yaml:
+### 1. What is a Helm Library Chart?
 
+> A Library Chart is a Helm Chart that contains reusable template logic and helper functions but does not create Kubernetes resources.
+
+---
+
+### 2. Can you install a Library Chart directly?
+
+> No. Library Charts are designed to be used as dependencies by application charts and are not deployable on their own.
+
+---
+
+### 3. How do you declare a Library Chart?
+
+Set the following in `Chart.yaml`:
+
+```yaml
 type: library
-4. Why use library charts?
+```
 
-To eliminate duplicate template code and maintain consistent logic across multiple charts.
+---
 
-5. Which Helm function is commonly used with library charts?
-include
+### 4. Why use Library Charts?
 
-because it renders reusable templates defined in the library.
+> They eliminate duplicate template code, improve consistency, simplify maintenance, and enable reusable logic across multiple Helm Charts.
 
-6. Should Deployments and Services exist in a library chart?
+---
 
-No. A library chart should contain reusable template logic only.
+### 5. Which Helm function is commonly used with Library Charts?
+
+> `include`
+
+It renders reusable templates defined in the Library Chart.
+
+---
+
+### 6. Should Deployments and Services exist in a Library Chart?
+
+> No. Library Charts should contain only reusable template logic and helper functions—not deployable Kubernetes resources.
+
+---
+
+# 📌 Key Takeaways
+
+- Library Charts centralize reusable Helm template logic for multiple application charts.
+- They do not create Kubernetes resources and cannot be installed independently.
+- Set `type: library` in `Chart.yaml` to define a Library Chart.
+- Common reusable helpers include labels, annotations, names, image references, and resource definitions.
+- Use `include` to render templates from a Library Chart.
+- Add Library Charts as dependencies to share logic across applications.
+- Proper versioning and documentation make Library Charts easy to maintain and adopt across teams.

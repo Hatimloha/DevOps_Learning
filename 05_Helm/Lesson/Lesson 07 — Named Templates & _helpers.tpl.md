@@ -1,459 +1,608 @@
-Lesson 7 — Named Templates & _helpers.tpl
+# 🚀 Helm Tutorial — Lesson 7: Named Templates & `_helpers.tpl`
 
-This lesson covers one of the most important concepts in Helm: reusable templates.
+> Learn how to create reusable template functions using `_helpers.tpl` to eliminate duplication and build maintainable Helm Charts.
 
-If Lesson 6 taught you how to make templates dynamic, Lesson 7 teaches you how to avoid duplication.
+---
 
-Every production Helm chart uses _helpers.tpl.
+# 📚 Table of Contents
 
-Learning Objectives
+- [Learning Objectives](#-learning-objectives)
+- [The Problem](#-the-problem)
+- [The Solution](#-the-solution)
+- [What is `_helpers.tpl`?](#-what-is-_helperstpl)
+- [Using `define`](#-using-define)
+- [Using `include`](#-using-include)
+- [Passing Context (`.`)](#-passing-context-)
+- [Using `.Chart` in Helpers](#-using-chart-in-helpers)
+- [Using `.Release` in Helpers](#-using-release-in-helpers)
+- [A Real `_helpers.tpl` Example](#-a-real-_helperstpl-example)
+- [Using `printf`](#-using-printf)
+- [Creating Reusable Labels](#-creating-reusable-labels)
+- [`indent` vs `nindent`](#-indent-vs-nindent)
+- [`template` vs `include`](#-template-vs-include)
+- [Production Project Structure](#-production-project-structure)
+- [Common Mistakes](#-common-mistakes)
+- [Hands-on Lab](#-hands-on-lab)
+- [Summary](#-summary)
+- [Interview Questions](#-interview-questions)
+- [Key Takeaways](#-key-takeaways)
 
-By the end of this lesson, you'll understand:
+---
 
-What _helpers.tpl is
-Why named templates exist
-define
-include
-template
-Template scope
-Passing context (.)
-How Helm generates consistent resource names and labels
-The Problem
+# 🎯 Learning Objectives
 
-Suppose you have:
+By the end of this lesson, you will be able to:
 
-deployment.yaml
+- ✅ Understand the purpose of `_helpers.tpl`
+- ✅ Create reusable templates using `define`
+- ✅ Reuse templates with `include`
+- ✅ Understand `template`
+- ✅ Pass the current context using `.`
+- ✅ Generate consistent resource names and labels
+- ✅ Reduce duplication across Helm Charts
 
+---
+
+# ❓ The Problem
+
+Suppose your application contains multiple Kubernetes resources.
+
+### `deployment.yaml`
+
+```yaml
 metadata:
   name: my-app
+```
 
-service.yaml
+### `service.yaml`
 
+```yaml
 metadata:
   name: my-app
+```
 
-configmap.yaml
+### `configmap.yaml`
 
+```yaml
 metadata:
   name: my-app
+```
 
-secret.yaml
+### `secret.yaml`
 
+```yaml
 metadata:
   name: my-app
+```
 
-Now the application name changes.
+Now imagine the application name changes.
 
-You must edit every file.
+You must edit every template individually.
 
-Imagine doing this across 30 templates.
+With dozens of templates, this quickly becomes difficult to maintain.
 
-Not practical.
+---
 
-The Solution
+# 💡 The Solution
 
-Store the name once.
+Define the name once.
 
 Reuse it everywhere.
 
-Instead of:
+Instead of hardcoding:
 
+```text
 deployment.yaml
-
-my-app
+    my-app
 
 service.yaml
-
-my-app
+    my-app
 
 configmap.yaml
+    my-app
 
-my-app
+secret.yaml
+    my-app
+```
 
-Use:
+Use a helper:
 
+```text
 _helpers.tpl
-
-↓
-
+        │
+        ▼
 Application Name
-
-↓
-
-Deployment
-
-↓
-
-Service
-
-↓
-
-ConfigMap
-
-↓
-
-Secret
+        │
+        ├── Deployment
+        ├── Service
+        ├── ConfigMap
+        └── Secret
+```
 
 One definition.
 
 Many uses.
 
-What is _helpers.tpl?
+---
 
-It is a file that stores reusable template functions.
+# 📄 What is `_helpers.tpl`?
+
+`_helpers.tpl` stores reusable template functions.
 
 Default location:
 
+```text
 templates/
 └── _helpers.tpl
+```
 
-Unlike deployment.yaml, _helpers.tpl does not generate Kubernetes resources.
+Unlike `deployment.yaml` or `service.yaml`, this file **does not generate Kubernetes resources**.
 
-It only defines reusable snippets.
+Instead, it defines reusable snippets that other templates can call.
 
-define
+---
+
+# 🛠️ Using `define`
 
 Syntax:
 
+```gotemplate
 {{ define "my-app.name" }}
 
 my-app
 
 {{ end }}
+```
 
-Nothing is rendered yet.
+Nothing is rendered immediately.
 
-You've simply created a reusable template called:
+This simply creates a reusable template named:
 
+```text
 my-app.name
-include
+```
 
-To use the template:
+---
 
+# 📥 Using `include`
+
+To use the helper:
+
+```yaml
 metadata:
   name: {{ include "my-app.name" . }}
+```
 
-Output:
+Rendered output:
 
+```yaml
 metadata:
   name: my-app
+```
 
-Think of it like calling a function.
+Think of `include` as calling a function.
 
-JavaScript Analogy
+---
 
-JavaScript:
+# 💻 JavaScript Analogy
 
+### JavaScript
+
+```javascript
 function appName() {
     return "my-app";
 }
 
 console.log(appName());
+```
 
-Helm:
+### Helm
 
+```gotemplate
 {{ define "my-app.name" }}
 
 my-app
 
 {{ end }}
+```
 
-Use:
+Call it:
 
+```gotemplate
 {{ include "my-app.name" . }}
+```
 
 Both return the same value.
 
-Passing Context (.)
+---
 
-Notice:
+# 🔄 Passing Context (`.`)
 
+Notice the helper call:
+
+```gotemplate
 {{ include "my-app.name" . }}
+```
 
-What is the .?
-
-It passes the current context into the helper.
+The dot (`.`) passes the current template context into the helper.
 
 Without it:
 
+```gotemplate
 {{ include "my-app.name" }}
+```
 
-many helpers won't have access to .Values, .Release, .Chart, and other objects.
+the helper cannot access objects such as:
 
-Rule:
+- `.Values`
+- `.Chart`
+- `.Release`
 
-Almost always pass . to include.
+> **Best Practice:** Always pass `.` to `include` unless you intentionally want a different context.
 
-Example Using .Chart
+---
+
+# 📦 Using `.Chart` in Helpers
 
 Helper:
 
+```gotemplate
 {{ define "my-app.chartName" }}
 
 {{ .Chart.Name }}
 
 {{ end }}
+```
 
-Use:
+Usage:
 
+```yaml
 metadata:
   labels:
     app: {{ include "my-app.chartName" . }}
+```
 
-If:
+If `Chart.yaml` contains:
 
+```yaml
 name: ecommerce
+```
 
-Output:
+Rendered output:
 
+```yaml
 labels:
   app: ecommerce
-Helper That Uses .Release
+```
+
+---
+
+# 🚀 Using `.Release` in Helpers
 
 Helper:
 
+```gotemplate
 {{ define "my-app.fullname" }}
 
 {{ .Release.Name }}-{{ .Chart.Name }}
 
 {{ end }}
+```
 
 Install:
 
+```bash
 helm install demo .
+```
 
-Output:
+Rendered output:
 
+```text
 demo-my-app
+```
 
-If you install:
+Install again:
 
+```bash
 helm install production .
+```
 
-Output:
+Rendered output:
 
+```text
 production-my-app
+```
 
-No template changes required.
+No template modifications are required.
 
-Real _helpers.tpl
+---
 
-A simplified version:
+# 📄 A Real `_helpers.tpl` Example
 
+Helper:
+
+```gotemplate
 {{ define "my-app.fullname" }}
 
 {{ printf "%s-%s" .Release.Name .Chart.Name }}
 
 {{ end }}
+```
 
 Deployment:
 
+```yaml
 metadata:
   name: {{ include "my-app.fullname" . }}
+```
 
 Service:
 
+```yaml
 metadata:
   name: {{ include "my-app.fullname" . }}
+```
 
 ConfigMap:
 
+```yaml
 metadata:
   name: {{ include "my-app.fullname" . }}
+```
 
-Everything now uses the same naming logic.
+Every resource now follows the same naming convention.
 
-printf
+---
 
-printf formats strings.
+# 📝 Using `printf`
+
+The `printf` function formats strings.
 
 Example:
 
+```gotemplate
 {{ printf "%s-%s" "demo" "nginx" }}
+```
 
 Output:
 
+```text
 demo-nginx
+```
 
 Another example:
 
+```gotemplate
 {{ printf "%s:%s" "nginx" "1.27" }}
+```
 
 Output:
 
+```text
 nginx:1.27
-Helper Returning Labels
+```
+
+---
+
+# 🏷️ Creating Reusable Labels
 
 Helper:
 
+```gotemplate
 {{ define "my-app.labels" }}
 
 app: {{ .Chart.Name }}
-
 release: {{ .Release.Name }}
 
 {{ end }}
+```
 
-Use:
+Usage:
 
+```yaml
 metadata:
   labels:
-
 {{ include "my-app.labels" . | indent 4 }}
+```
 
-Output:
+Rendered output:
 
+```yaml
 metadata:
   labels:
     app: my-app
     release: demo
-Why indent?
+```
 
-Without indent:
+---
 
+# 📏 `indent` vs `nindent`
+
+Without indentation:
+
+```yaml
 metadata:
   labels:
 app: my-app
 release: demo
+```
 
-Invalid YAML.
+The YAML is invalid.
 
-With:
+---
 
+Using `indent`:
+
+```gotemplate
 {{ include "my-app.labels" . | indent 4 }}
+```
 
 Output:
 
+```yaml
 metadata:
   labels:
     app: my-app
     release: demo
+```
 
-Correct indentation.
+---
 
-nindent
+Using `nindent`:
 
-Difference:
-
-indent
-
-↓
-
-Adds spaces
-
-nindent
-
-↓
-
-Adds a newline
-+
-Spaces
-
-Example:
-
+```gotemplate
 labels:
 {{ include "my-app.labels" . | nindent 2 }}
+```
 
-Result:
+Output:
 
+```yaml
 labels:
   app: my-app
   release: demo
+```
 
-In practice, nindent is often preferred when inserting multi-line helper output into YAML.
+### Difference
 
-template vs include
+| Function | Purpose |
+|-----------|---------|
+| `indent` | Adds spaces before each line |
+| `nindent` | Adds a newline **and** indentation |
+
+In most Helm Charts, `nindent` is preferred for multi-line YAML blocks.
+
+---
+
+# ⚖️ `template` vs `include`
 
 Both execute named templates.
 
 Example:
 
+```gotemplate
 {{ template "my-app.name" . }}
+```
 
-works.
+works correctly.
 
-But include returns a string, so it works with pipelines.
+However, `include` returns a string, making it compatible with pipelines.
 
 Example:
 
+```gotemplate
 {{ include "my-app.name" . | upper }}
+```
 
 Output:
 
+```text
 MY-APP
+```
 
-This does not work well with template.
+This flexibility is why `include` is recommended.
 
-Recommendation
+---
+
+## Recommendation
 
 Use:
 
+```gotemplate
 include
+```
 
-almost all the time.
+for almost every helper invocation.
 
-It's the modern Helm best practice.
+It is the modern Helm best practice.
 
-Real Production Structure
+---
+
+# 🏗️ Production Project Structure
+
+```text
 my-app/
 
 templates/
-
 ├── deployment.yaml
 ├── service.yaml
 ├── configmap.yaml
 ├── secret.yaml
 └── _helpers.tpl
+```
 
 Every resource uses:
 
+```gotemplate
 {{ include "my-app.fullname" . }}
+```
 
-Now if naming rules change, update only _helpers.tpl.
+If the naming convention changes, you only update `_helpers.tpl`.
 
-Common Mistakes
-Forgetting .
+---
 
-Wrong:
+# ❌ Common Mistakes
 
+## Forgetting the Context (`.`)
+
+Incorrect:
+
+```gotemplate
 {{ include "my-app.fullname" }}
+```
 
 Correct:
 
+```gotemplate
 {{ include "my-app.fullname" . }}
-Duplicating Logic
+```
 
-Wrong:
+---
 
-deployment:
+## Duplicating Logic
 
+Incorrect:
+
+```text
+Deployment
 demo-my-app
 
-service:
-
+Service
 demo-my-app
 
-configmap:
-
+ConfigMap
 demo-my-app
+```
 
 Correct:
 
-One helper.
+```text
+One Helper
 
-Reuse everywhere.
+↓
 
-Wrong Indentation
+Reuse Everywhere
+```
 
-Without indent or nindent, YAML can become invalid.
+---
 
-Always preview:
+## Incorrect Indentation
 
+Without `indent` or `nindent`, generated YAML may be invalid.
+
+Always verify the output:
+
+```bash
 helm template demo .
-Hands-on Lab
+```
+
+---
+
+# 🧪 Hands-on Lab
 
 Replace the default helper with:
 
+```gotemplate
 {{ define "my-app.fullname" }}
 {{ printf "%s-%s" .Release.Name .Chart.Name }}
 {{ end }}
@@ -462,50 +611,86 @@ Replace the default helper with:
 app: {{ .Chart.Name }}
 release: {{ .Release.Name }}
 {{ end }}
+```
 
-Now update deployment.yaml:
+Update `deployment.yaml`:
 
+```yaml
 metadata:
   name: {{ include "my-app.fullname" . }}
 
   labels:
 {{ include "my-app.labels" . | nindent 4 }}
+```
 
-Update service.yaml in the same way.
+Update `service.yaml` using the same helpers.
 
-Run:
+Render the chart:
 
+```bash
 helm template demo .
+```
 
 Verify:
 
-Both Deployment and Service have the same generated name.
-Both have identical labels.
-The YAML indentation is correct.
-Summary
-Function	Purpose
-define	Create a reusable named template
-include	Call a named template and return its output
-template	Execute a named template (less flexible)
-printf	Format strings
-indent	Add spaces for YAML indentation
-nindent	Add a newline and indentation
-Interview Questions
-1. What is _helpers.tpl?
+- Deployment and Service use the same generated name.
+- Labels are identical across resources.
+- YAML indentation is correct.
 
-A file used to define reusable template snippets and helper functions.
+---
 
-2. What is the difference between define and include?
-define creates a named template.
-include executes it and returns its output.
-3. Why is include preferred over template?
+# 📋 Summary
 
-Because include returns a string that can be piped into functions like quote, upper, indent, or nindent.
+| Function | Purpose |
+|-----------|---------|
+| `define` | Create a reusable named template |
+| `include` | Execute a named template and return its output |
+| `template` | Execute a named template (less flexible) |
+| `printf` | Format strings |
+| `indent` | Add spaces for YAML indentation |
+| `nindent` | Add a newline and indentation |
 
-4. Why do we pass . to include?
+---
 
-To provide the current context so the helper can access objects like .Values, .Chart, and .Release.
+# 🎯 Interview Questions
 
-5. Why are helpers useful?
+### 1. What is `_helpers.tpl`?
 
-They eliminate duplication and make charts easier to maintain.
+> `_helpers.tpl` is a file used to define reusable template snippets and helper functions that can be shared across multiple Helm templates.
+
+---
+
+### 2. What is the difference between `define` and `include`?
+
+- `define` creates a named template.
+- `include` executes that template and returns its output as a string.
+
+---
+
+### 3. Why is `include` preferred over `template`?
+
+> Because `include` returns a string, allowing it to be combined with functions such as `quote`, `upper`, `indent`, and `nindent` using pipelines.
+
+---
+
+### 4. Why do we pass `.` to `include`?
+
+> Passing `.` provides the current context so the helper can access objects such as `.Values`, `.Chart`, and `.Release`.
+
+---
+
+### 5. Why are helpers useful?
+
+> Helpers eliminate duplicated template logic, improve consistency, and make Helm Charts easier to maintain.
+
+---
+
+# 📌 Key Takeaways
+
+- `_helpers.tpl` stores reusable template functions.
+- `define` creates reusable named templates.
+- `include` executes helpers and returns their output.
+- Always pass the current context (`.`) when calling helpers.
+- `printf` is useful for building dynamic names and strings.
+- `indent` and `nindent` ensure generated YAML maintains correct formatting.
+- Centralizing naming and labeling logic in `_helpers.tpl` greatly improves maintainability in production Helm Charts.

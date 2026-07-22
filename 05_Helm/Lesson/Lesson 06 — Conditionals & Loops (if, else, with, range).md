@@ -1,103 +1,155 @@
-Lesson 6 — Conditionals & Loops (if, else, with, range)
+# 🚀 Helm Tutorial — Lesson 6: Conditionals & Loops (`if`, `else`, `with`, `range`)
 
-This lesson is where Helm templates become dynamic.
+> Learn how to make Helm templates dynamic using conditionals, loops, and context switching to build production-ready Kubernetes manifests.
 
-Until now, your templates have only replaced placeholders. Now you'll learn how to:
+---
 
-Create resources only when needed
-Iterate over lists
-Simplify nested values
-Build reusable production-ready templates
+# 📚 Table of Contents
 
-These concepts are used in almost every real-world Helm chart.
+- [Learning Objectives](#-learning-objectives)
+- [Why Do We Need Conditionals?](#-why-do-we-need-conditionals)
+- [The `if` Statement](#-the-if-statement)
+- [Real-World Example](#-real-world-example)
+- [`if` + `else`](#-if--else)
+- [Nested `if`](#-nested-if)
+- [Comparison Functions](#-comparison-functions)
+- [The `with` Statement](#-the-with-statement)
+- [The `range` Loop](#-the-range-loop)
+- [Looping Through Maps](#-looping-through-maps)
+- [Variables Inside `range`](#-variables-inside-range)
+- [Combining `if` and `range`](#-combining-if-and-range)
+- [Production Example](#-production-example)
+- [Common Mistakes](#-common-mistakes)
+- [Hands-on Lab](#-hands-on-lab)
+- [Summary](#-summary)
+- [Interview Questions](#-interview-questions)
+- [Homework](#-homework)
+- [Key Takeaways](#-key-takeaways)
 
-Learning Objectives
+---
 
-By the end of this lesson, you'll be able to:
+# 🎯 Learning Objectives
 
-Use if
-Use else
-Use with
-Use range
-Loop through lists and maps
-Conditionally create Kubernetes resources
-Why Do We Need Conditionals?
+By the end of this lesson, you will be able to:
 
-Suppose your application has an Ingress.
+- ✅ Use `if`
+- ✅ Use `else`
+- ✅ Use `with`
+- ✅ Use `range`
+- ✅ Iterate through lists and maps
+- ✅ Conditionally create Kubernetes resources
 
-Development:
+---
 
+# ❓ Why Do We Need Conditionals?
+
+Imagine your application uses an **Ingress**.
+
+### Development
+
+```text
 No Ingress
+```
 
-Production:
+### Production
 
+```text
 Ingress Enabled
+```
 
-Should you maintain two different ingress.yaml files?
+Should you maintain two separate `ingress.yaml` files?
 
-No.
+**No.**
 
-Use one template:
+Instead, use one template that creates the resource only when required.
 
-If enabled
-    ↓
+```text
+Ingress Enabled?
+        │
+   Yes  ▼
 Create Ingress
 
-Else
-    ↓
-Don't create it
-The if Statement
+   No
+        ▼
+Do Nothing
+```
 
-Syntax:
+---
 
+# 🔀 The `if` Statement
+
+### Syntax
+
+```gotemplate
 {{ if CONDITION }}
 
 ...
 
 {{ end }}
-Example 1
+```
 
-values.yaml
+---
 
+## Example
+
+### `values.yaml`
+
+```yaml
 ingress:
   enabled: true
+```
 
-Template:
+### Template
 
+```gotemplate
 {{ if .Values.ingress.enabled }}
 
 kind: Ingress
 
 {{ end }}
+```
 
-Run:
+Render the chart:
 
+```bash
 helm template demo .
+```
 
 Output:
 
+```yaml
 kind: Ingress
+```
 
-Now change:
+Disable Ingress:
 
+```yaml
 ingress:
   enabled: false
+```
 
 Output:
 
-Nothing
+```text
+(No output)
+```
 
-The resource disappears completely.
+The resource is completely omitted.
 
-Real Production Example
+---
 
-values.yaml
+# 🌍 Real-World Example
 
+### `values.yaml`
+
+```yaml
 autoscaling:
   enabled: true
+```
 
-templates/hpa.yaml
+### `templates/hpa.yaml`
 
+```gotemplate
 {{ if .Values.autoscaling.enabled }}
 
 apiVersion: autoscaling/v2
@@ -106,20 +158,26 @@ kind: HorizontalPodAutoscaler
 ...
 
 {{ end }}
+```
 
-If disabled:
+Disable autoscaling:
 
+```yaml
 autoscaling:
   enabled: false
+```
 
-Helm doesn't generate the HPA.
+The HorizontalPodAutoscaler is no longer generated.
 
-This is exactly how many production charts work.
+This pattern is used in almost every production Helm Chart.
 
-if + else
+---
+
+# 🔄 `if` + `else`
 
 Example:
 
+```gotemplate
 {{ if .Values.production }}
 
 replicas: 10
@@ -129,26 +187,41 @@ replicas: 10
 replicas: 2
 
 {{ end }}
+```
 
-Development:
+### Development
 
+```yaml
 production: false
+```
 
 Output:
 
+```yaml
 replicas: 2
+```
 
-Production:
+---
 
+### Production
+
+```yaml
 production: true
+```
 
 Output:
 
+```yaml
 replicas: 10
-Nested if
+```
+
+---
+
+# 🪆 Nested `if`
 
 Example:
 
+```gotemplate
 {{ if .Values.ingress.enabled }}
 
 {{ if .Values.ingress.tls }}
@@ -158,81 +231,124 @@ TLS Enabled
 {{ end }}
 
 {{ end }}
+```
 
-Meaning:
+Execution flow:
 
+```text
 Ingress Enabled?
-
+        │
        Yes
         │
         ▼
 TLS Enabled?
-
+        │
        Yes
         │
         ▼
 Generate TLS Configuration
-Comparison Functions
+```
 
-Helm doesn't use operators like:
+---
 
+# ⚖️ Comparison Functions
+
+Helm does **not** use operators like:
+
+```text
 ==
 !=
 >
 <
+```
 
-Instead, it uses functions.
+Instead, it uses built-in template functions.
 
-eq
+---
+
+## `eq`
+
+```gotemplate
 {{ if eq .Values.environment "prod" }}
 
 Production
 
 {{ end }}
-ne
+```
+
+---
+
+## `ne`
+
+```gotemplate
 {{ if ne .Values.environment "dev" }}
 
 Not Development
 
 {{ end }}
-and
+```
+
+---
+
+## `and`
+
+```gotemplate
 {{ if and .Values.ingress.enabled .Values.ingress.tls }}
 
 TLS Enabled
 
 {{ end }}
+```
 
-Both must be true.
+Both conditions must evaluate to `true`.
 
-or
+---
+
+## `or`
+
+```gotemplate
 {{ if or .Values.dev .Values.stage }}
 
 Non Production
 
 {{ end }}
+```
 
-Only one needs to be true.
+At least one condition must be `true`.
 
-not
+---
+
+## `not`
+
+```gotemplate
 {{ if not .Values.debug }}
 
 Debug Disabled
 
 {{ end }}
-The with Statement
+```
 
-Without with:
+---
 
+# 📂 The `with` Statement
+
+Without `with`:
+
+```gotemplate
 {{ .Values.image.repository }}
 
 {{ .Values.image.tag }}
 
 {{ .Values.image.pullPolicy }}
+```
 
-Repeated .Values.image becomes noisy.
+This becomes repetitive.
 
-Using with:
+---
 
+Using `with`:
+
+```gotemplate
 {{ with .Values.image }}
 
 repository: {{ .repository }}
@@ -242,122 +358,169 @@ tag: {{ .tag }}
 pullPolicy: {{ .pullPolicy }}
 
 {{ end }}
+```
 
-Inside the with block:
+Inside the `with` block:
 
+```text
 .
+```
 
-now points to:
+now points directly to:
 
-image
+```text
+.Values.image
+```
 
-instead of the whole chart context.
+Instead of writing:
 
-Think of it like changing directories:
-
-Before:
-
+```gotemplate
 .Values.image.repository
+```
 
-After entering with:
+You simply write:
 
+```gotemplate
 .repository
+```
 
-Cleaner and easier to read.
+This makes templates cleaner and easier to maintain.
 
-The range Loop
+---
 
-Suppose:
+# 🔁 The `range` Loop
 
-values.yaml
+Suppose `values.yaml` contains:
 
+```yaml
 ports:
   - 80
   - 443
   - 8080
+```
 
-Loop:
+Template:
 
+```gotemplate
 {{ range .Values.ports }}
 
 - containerPort: {{ . }}
 
 {{ end }}
+```
 
-Output:
+Rendered output:
 
+```yaml
 - containerPort: 80
 
 - containerPort: 443
 
 - containerPort: 8080
+```
 
-Here:
+Inside a `range` loop:
 
+```text
 .
+```
 
-represents the current item in the list.
+represents the current item.
 
-Another Example
+---
+
+## Another Example
+
+### `values.yaml`
+
+```yaml
 env:
   - DEV
   - TEST
   - PROD
+```
 
 Template:
 
+```gotemplate
 {{ range .Values.env }}
 
 - {{ . }}
 
 {{ end }}
+```
 
 Output:
 
+```text
 - DEV
 
 - TEST
 
 - PROD
-Looping Through Maps
+```
 
-values.yaml
+---
 
+# 🗂️ Looping Through Maps
+
+### `values.yaml`
+
+```yaml
 labels:
   app: nginx
   env: prod
+```
 
 Template:
 
+```gotemplate
 {{ range $key, $value := .Values.labels }}
 
 {{ $key }}: {{ $value }}
 
 {{ end }}
+```
 
-Output:
+Rendered output:
 
+```yaml
 app: nginx
 
 env: prod
-Variables Inside range
+```
+
+---
+
+# 📌 Variables Inside `range`
+
+Example:
+
+```gotemplate
 {{ range $index, $port := .Values.ports }}
 
 Port {{ $index }} = {{ $port }}
 
 {{ end }}
+```
 
 Output:
 
+```text
 Port 0 = 80
 
 Port 1 = 443
 
 Port 2 = 8080
-Combining if + range
+```
+
+---
+
+# 🔗 Combining `if` and `range`
 
 Example:
 
+```gotemplate
 {{ if .Values.ingress.enabled }}
 
 {{ range .Values.ingress.hosts }}
@@ -367,37 +530,41 @@ Example:
 {{ end }}
 
 {{ end }}
+```
 
-If ingress is disabled:
+If Ingress is disabled, the host entries are not generated.
 
-No hosts are generated.
+---
 
-Real Project Example
+# 🏢 Production Example
 
-values.yaml
+### `values.yaml`
 
+```yaml
 env:
-
   - name: DB_HOST
     value: mysql
 
   - name: DB_PORT
     value: "3306"
+```
 
 Template:
 
+```gotemplate
 env:
 
 {{ range .Values.env }}
 
   - name: {{ .name }}
-
     value: {{ .value | quote }}
 
 {{ end }}
+```
 
-Output:
+Rendered output:
 
+```yaml
 env:
 
 - name: DB_HOST
@@ -405,65 +572,93 @@ env:
 
 - name: DB_PORT
   value: "3306"
+```
 
-This pattern is extremely common in production charts.
+This pattern is extremely common in production Helm Charts.
 
-Common Mistakes
-❌ Forgetting end
+---
 
-Wrong:
+# ❌ Common Mistakes
 
+## Forgetting `end`
+
+Incorrect:
+
+```gotemplate
 {{ if .Values.enabled }}
 
 kind: Service
+```
 
 Correct:
 
+```gotemplate
 {{ if .Values.enabled }}
 
 kind: Service
 
 {{ end }}
-❌ Using .Values inside with
+```
 
-Inside:
+---
 
+## Using `.Values` Inside `with`
+
+Incorrect:
+
+```gotemplate
 {{ with .Values.image }}
-
-Don't write:
 
 {{ .Values.image.tag }}
 
-Write:
+{{ end }}
+```
+
+Correct:
+
+```gotemplate
+{{ with .Values.image }}
 
 {{ .tag }}
 
-because . already refers to .Values.image.
+{{ end }}
+```
 
-❌ Forgetting . in range
+Inside a `with` block, `.` already points to the selected object.
 
-Wrong:
+---
 
+## Forgetting the Current Context in `range`
+
+Incorrect:
+
+```gotemplate
 {{ range .Values.ports }}
 
 {{ .Values }}
 
 {{ end }}
+```
 
 Correct:
 
+```gotemplate
 {{ range .Values.ports }}
 
 {{ . }}
 
 {{ end }}
+```
 
-Inside range, . becomes the current element.
+Inside `range`, `.` represents the current list element.
 
-Hands-on Lab
+---
 
-Add to values.yaml:
+# 🧪 Hands-on Lab
 
+Add the following to `values.yaml`:
+
+```yaml
 ingress:
   enabled: true
 
@@ -474,9 +669,11 @@ ports:
 image:
   repository: nginx
   tag: latest
+```
 
 Create a test template:
 
+```gotemplate
 {{ if .Values.ingress.enabled }}
 Ingress Enabled
 {{ end }}
@@ -491,39 +688,95 @@ Ports:
 {{ range .Values.ports }}
 - {{ . }}
 {{ end }}
+```
 
-Run:
+Render the chart:
 
+```bash
 helm template demo .
+```
 
-Observe:
+Observe how:
 
-if controls whether content is rendered.
-with changes the current context.
-range repeats output for each list item.
-Summary
-Statement	Purpose
-if	Render content conditionally
-else	Alternative branch
-with	Change the current context
-range	Iterate over lists or maps
-eq, ne	Compare values
-and, or, not	Combine conditions
-Interview Questions
-What is the purpose of if in Helm templates?
-How does with change the meaning of .?
-What does range iterate over?
-How do you compare two values in Helm?
-Why is range useful for Kubernetes resources?
-What happens if an if condition evaluates to false?
-Homework
-Add an ingress.enabled flag to values.yaml and conditionally render a simple Ingress resource.
-Create a list of ports and use range to generate containerPort entries.
-Use with to simplify access to .Values.image.
-Create a labels map and use range to render each key/value pair.
+- `if` controls conditional rendering.
+- `with` changes the current context.
+- `range` repeats output for each list item.
 
-Render your chart after each change with:
+---
 
+# 📋 Summary
+
+| Statement | Purpose |
+|-----------|---------|
+| `if` | Render content conditionally |
+| `else` | Provide an alternative branch |
+| `with` | Change the current context |
+| `range` | Iterate over lists or maps |
+| `eq`, `ne` | Compare values |
+| `and`, `or`, `not` | Combine logical conditions |
+
+---
+
+# 🎯 Interview Questions
+
+### 1. What is the purpose of `if` in Helm templates?
+
+> `if` conditionally renders content based on whether an expression evaluates to `true`.
+
+---
+
+### 2. How does `with` change the meaning of `.`?
+
+> Inside a `with` block, `.` becomes the specified object, allowing shorter and cleaner template expressions.
+
+---
+
+### 3. What does `range` iterate over?
+
+> `range` iterates through lists, arrays, and maps, rendering content for each item.
+
+---
+
+### 4. How do you compare two values in Helm?
+
+> Helm uses comparison functions such as `eq`, `ne`, `lt`, `gt`, `le`, and `ge` instead of traditional comparison operators.
+
+---
+
+### 5. Why is `range` useful for Kubernetes resources?
+
+> It allows repetitive resources like ports, environment variables, labels, annotations, and volume mounts to be generated dynamically from configuration values.
+
+---
+
+### 6. What happens if an `if` condition evaluates to `false`?
+
+> Helm skips the entire block, and no YAML is generated for that section.
+
+---
+
+# 📝 Homework
+
+Complete the following exercises:
+
+- Add an `ingress.enabled` flag to `values.yaml` and conditionally render an Ingress resource.
+- Create a list of ports and generate `containerPort` entries using `range`.
+- Use `with` to simplify access to `.Values.image`.
+- Create a `labels` map and render each key/value pair using `range`.
+
+After each change, render your chart to inspect the generated YAML:
+
+```bash
 helm template demo .
+```
 
-and inspect the generated YAML.
+---
+
+# 📌 Key Takeaways
+
+- `if` conditionally renders Kubernetes resources.
+- `else` provides an alternative rendering path.
+- `with` simplifies access to nested values by changing the current context.
+- `range` iterates through lists and maps to generate repeated YAML sections.
+- Comparison functions such as `eq`, `ne`, `and`, `or`, and `not` are used instead of traditional operators.
+- These template features are fundamental for building reusable, dynamic, and production-ready Helm Charts.

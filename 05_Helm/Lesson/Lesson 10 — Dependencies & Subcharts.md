@@ -1,35 +1,56 @@
-Lesson 10 — Dependencies & Subcharts
+# 🚀 Helm Tutorial — Lesson 10: Dependencies & Subcharts
 
-This lesson covers how Helm manages multiple applications as a single deployment.
+> Learn how Helm packages multiple applications into a single deployment using **dependencies** and **subcharts**, making complex Kubernetes applications easier to manage.
 
-In production, applications rarely run alone.
+---
 
-For example, an e-commerce application might need:
+# 📚 Table of Contents
 
-Frontend
-Backend
-Redis
-PostgreSQL
-NGINX Ingress
+- [Learning Objectives](#-learning-objectives)
+- [Why Do We Need Dependencies?](#-why-do-we-need-dependencies)
+- [Parent Chart](#-parent-chart)
+- [Child Chart (Subchart)](#-child-chart-subchart)
+- [Parent vs Child Charts](#-parent-vs-child-charts)
+- [Adding Dependencies](#-adding-dependencies)
+- [Downloading Dependencies](#-downloading-dependencies)
+- [Understanding `Chart.lock`](#-understanding-chartlock)
+- [Installing All Components](#-installing-all-components)
+- [Passing Values to Subcharts](#-passing-values-to-subcharts)
+- [Enabling and Disabling Dependencies](#-enabling-and-disabling-dependencies)
+- [Using Official Repository Charts](#-using-official-repository-charts)
+- [Using Local Subcharts](#-using-local-subcharts)
+- [Dependency Flow](#-dependency-flow)
+- [Enterprise Project Structure](#-enterprise-project-structure)
+- [Best Practices](#-best-practices)
+- [Hands-on Lab](#-hands-on-lab)
+- [Interview Questions](#-interview-questions)
+- [Homework](#-homework)
+- [Key Takeaways](#-key-takeaways)
 
-Instead of installing each one separately, Helm lets you package them together using dependencies and subcharts.
+---
 
-Learning Objectives
+# 🎯 Learning Objectives
 
-By the end of this lesson, you'll understand:
+By the end of this lesson, you will be able to:
 
-What subcharts are
-What dependencies are
-Parent vs child charts
-Chart.yaml dependencies
-The charts/ directory
-helm dependency update
-Passing values to subcharts
-Enabling/disabling dependencies
-Why Do We Need Dependencies?
+- ✅ Understand what subcharts are
+- ✅ Understand Helm dependencies
+- ✅ Differentiate between parent and child charts
+- ✅ Configure dependencies in `Chart.yaml`
+- ✅ Understand the `charts/` directory
+- ✅ Use `helm dependency update`
+- ✅ Pass values to subcharts
+- ✅ Enable or disable optional dependencies
 
-Imagine an application:
+---
 
+# ❓ Why Do We Need Dependencies?
+
+Real-world applications rarely consist of a single service.
+
+An **e-commerce application** might require:
+
+```text
 E-Commerce Application
 
 ├── Frontend
@@ -37,9 +58,11 @@ E-Commerce Application
 ├── Redis
 ├── PostgreSQL
 └── Prometheus
+```
 
-Without Helm:
+Without Helm, each component must be installed separately.
 
+```bash
 helm install frontend ./frontend
 
 helm install backend ./backend
@@ -49,490 +72,599 @@ helm install redis bitnami/redis
 helm install postgres bitnami/postgresql
 
 helm install prometheus prometheus-community/prometheus
+```
 
-Five different installations.
+That's five separate installations.
 
-With Dependencies
+---
+
+## Helm's Solution
+
+Bundle everything into a single parent chart.
+
+```text
 E-Commerce Chart
 
-│
-
 ├── Frontend
-
 ├── Backend
-
 ├── Redis
-
 └── PostgreSQL
+```
 
-Install once:
+Install everything with one command:
 
+```bash
 helm install ecommerce .
+```
 
-Everything gets installed.
+Helm deploys all required components together.
 
-Parent Chart
+---
 
-Suppose:
+# 📦 Parent Chart
 
+Suppose your project is called:
+
+```text
 ecommerce/
+```
 
-This is the parent chart.
+This is the **parent chart**.
 
-Structure:
+Project structure:
 
+```text
 ecommerce/
-
 ├── Chart.yaml
-
 ├── values.yaml
-
 ├── templates/
-
 └── charts/
+```
 
-The parent controls everything.
+The parent chart orchestrates the deployment of all dependent components.
 
-Child Chart (Subchart)
+---
 
-Inside:
+# 👶 Child Chart (Subchart)
 
-charts/
+Inside the `charts/` directory:
+
+```text
 ecommerce/
-
 └── charts/
-
     ├── redis/
-
     └── postgresql/
+```
 
-Both are independent Helm charts.
+Each directory contains an independent Helm Chart.
 
-These are called subcharts.
+These are called **subcharts**.
 
-Parent vs Child
-Parent Chart	Child Chart
-Main application	Dependency
-Controls deployment	Provides a service
-Has dependencies	Used by parent
+---
+
+# ⚖️ Parent vs Child Charts
+
+| Parent Chart | Child Chart |
+|---------------|-------------|
+| Main application | Dependency |
+| Controls deployment | Provides a supporting service |
+| Defines dependencies | Used by the parent |
 
 Example:
 
-Parent
-
-↓
-
+```text
+Parent Chart
+      │
+      ▼
 Backend
-
-↓
-
+      │
+      ▼
 Redis
+```
 
-Backend depends on Redis.
+The Backend depends on Redis, but the parent manages both.
 
-Adding Dependencies
+---
 
-Open:
+# ➕ Adding Dependencies
 
-Chart.yaml
+Open `Chart.yaml` and define dependencies.
 
 Example:
 
+```yaml
 apiVersion: v2
-
 name: ecommerce
-
 version: 0.1.0
 
 dependencies:
-
   - name: redis
-
     version: 20.6.0
-
     repository: https://charts.bitnami.com/bitnami
 
   - name: postgresql
-
     version: 16.7.4
-
     repository: https://charts.bitnami.com/bitnami
+```
 
 This tells Helm:
 
-Download Redis and PostgreSQL charts before installation.
+- Download the Redis chart
+- Download the PostgreSQL chart
+- Include both during installation
 
-Tip: The exact chart versions change over time. Always check the repository for current versions.
+> **Tip:** Chart versions change over time. Always verify the latest compatible version from the chart repository before adding it.
 
-Download Dependencies
+---
+
+# 📥 Downloading Dependencies
 
 Run:
 
+```bash
 helm dependency update
+```
 
-Helm:
+Helm performs the following steps:
 
-Reads Chart.yaml
-
-↓
-
-Downloads Charts
-
-↓
-
-Stores Them
-
-↓
-
+```text
+Read Chart.yaml
+      │
+      ▼
+Download Dependency Charts
+      │
+      ▼
+Store Them
+      │
+      ▼
 charts/
+```
 
 Result:
 
+```text
 charts/
-
 ├── redis-20.6.0.tgz
-
 └── postgresql-16.7.4.tgz
-What is Chart.lock?
+```
+
+---
+
+# 🔒 Understanding `Chart.lock`
 
 After running:
 
+```bash
 helm dependency update
+```
 
 Helm creates:
 
+```text
 Chart.lock
+```
 
 Example:
 
+```yaml
 dependencies:
+  - name: redis
+    version: 20.6.0
 
-- name: redis
+  - name: postgresql
+    version: 16.7.4
+```
 
-  version: 20.6.0
+### Purpose
 
-- name: postgresql
+`Chart.lock` locks dependency versions to ensure reproducible deployments.
 
-  version: 16.7.4
+It is similar to:
 
-Purpose:
+| Ecosystem | Lock File |
+|------------|-----------|
+| npm | `package-lock.json` |
+| Python | `Pipfile.lock` |
+| Rust | `Cargo.lock` |
 
-Lock dependency versions.
+Always commit `Chart.lock` to version control.
 
-Just like:
+---
 
-package-lock.json (npm)
-Pipfile.lock (Python)
-Cargo.lock (Rust)
+# 🚀 Installing All Components
 
-This ensures everyone installs the same dependency versions.
+Once dependencies have been downloaded:
 
-Install Everything
-
-Once dependencies are downloaded:
-
+```bash
 helm install ecommerce .
+```
 
 Helm installs:
 
+```text
 Parent Chart
-
-↓
-
+      │
+      ▼
 Redis
-
-↓
-
+      │
+      ▼
 PostgreSQL
-
-↓
-
+      │
+      ▼
 Application
+```
 
-One command.
+Everything is deployed with a single command.
 
-Passing Values to a Subchart
+---
 
-Parent:
+# ⚙️ Passing Values to Subcharts
 
+The parent chart can configure subcharts.
+
+Example:
+
+```yaml
 redis:
-
   architecture: standalone
 
   auth:
-
     enabled: false
+```
 
-Redis chart reads:
+The Redis chart automatically receives values under:
 
+```text
 .Values.redis
+```
 
-Helm automatically passes:
+---
 
-Parent Values
+## Example
 
-↓
+Parent `values.yaml`
 
-Child Values
-Example
-
-values.yaml
-
+```yaml
 redis:
-
   replica:
-
     replicaCount: 2
+```
 
-Redis chart receives:
+The Redis subchart receives:
 
+```yaml
 replica:
-
   replicaCount: 2
+```
 
-No modification to the Redis chart is required.
+No modifications to the Redis chart are required.
 
-Disabling a Dependency
+---
+
+# 🔄 Enabling and Disabling Dependencies
 
 Suppose Redis is optional.
 
-values.yaml
+`values.yaml`
 
+```yaml
 redis:
-
   enabled: false
+```
 
-In Chart.yaml:
+`Chart.yaml`
 
+```yaml
 dependencies:
+  - name: redis
+    condition: redis.enabled
+```
 
-- name: redis
+Behavior:
 
-  condition: redis.enabled
-
-Now:
-
-enabled = true
-
-↓
-
+```text
+redis.enabled = true
+        │
+        ▼
 Redis Installed
-enabled = false
+```
 
-↓
-
+```text
+redis.enabled = false
+        │
+        ▼
 Redis Skipped
+```
 
-This pattern is widely used.
+This conditional dependency pattern is widely used in production Helm Charts.
 
-Importing Existing Charts
+---
 
-Instead of writing a Redis chart yourself:
+# 📦 Using Official Repository Charts
 
+Instead of creating your own Redis chart:
+
+```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
 
 helm dependency update
+```
 
-Helm downloads the official chart.
+Helm downloads the official Redis chart automatically.
 
-Huge time saver.
+Benefits:
 
-Local Subcharts
+- Community maintained
+- Regular updates
+- Production tested
+- Saves development time
+
+---
+
+# 🏠 Using Local Subcharts
 
 Not every dependency comes from a repository.
 
 Example:
 
+```text
 ecommerce/
 
 charts/
-
-    frontend/
-
-    backend/
-
-Both are local Helm charts.
-
-Directory:
-
-charts/
-
 ├── frontend/
-
-│     ├── Chart.yaml
-
-│     └── templates/
-
 └── backend/
+```
 
+Directory structure:
+
+```text
+charts/
+├── frontend/
+│     ├── Chart.yaml
+│     └── templates/
+│
+└── backend/
       ├── Chart.yaml
-
       └── templates/
+```
 
-Helm packages them together.
+Helm packages local charts together with the parent chart.
 
-Dependency Flow
+---
+
+# 🔄 Dependency Flow
+
+```text
 Parent Chart
-
 │
-
 ├── templates/
-
 │
-
 ├── values.yaml
-
 │
-
 └── charts/
-
        │
-
        ├── Redis
-
        │
-
        └── PostgreSQL
+             │
+             ▼
+      helm install
+             │
+             ▼
+   Everything Deploys
+```
 
-↓
+---
 
-helm install
+# 🏢 Enterprise Project Structure
 
-↓
+A typical enterprise platform may look like this:
 
-Everything Deploys
-Common Enterprise Example
+```text
 company-platform/
 
 ├── frontend/
-
 ├── backend/
-
 ├── redis/
-
 ├── kafka/
-
 ├── postgresql/
-
 ├── monitoring/
-
 └── ingress/
+```
 
 One Helm release.
 
-Many components.
+Many services.
 
-Best Practices
-Keep Parent Lightweight
+---
 
-The parent should orchestrate dependencies rather than duplicate their logic.
+# ✅ Best Practices
 
-Use Official Charts
+### Keep the Parent Chart Lightweight
 
-Instead of creating your own Redis chart:
+The parent chart should orchestrate dependencies rather than duplicate their logic.
 
-Use trusted, maintained community charts when appropriate.
+---
 
-Lock Dependency Versions
+### Use Official Charts
+
+Instead of writing your own Redis or PostgreSQL chart, use trusted community-maintained charts whenever appropriate.
+
+---
+
+### Lock Dependency Versions
 
 Always commit:
 
+```text
 Chart.lock
+```
 
-This ensures consistent deployments.
+This guarantees consistent deployments across environments.
 
-Don't Modify Downloaded Charts
+---
 
-Configure them through:
+### Don't Modify Downloaded Charts
 
+Configure dependencies through:
+
+```yaml
 values.yaml
+```
 
 instead of editing files inside:
 
+```text
 charts/
+```
 
-Otherwise your changes may be lost when dependencies are updated.
+Otherwise, changes may be lost when dependencies are updated.
 
-Disable Optional Components
+---
+
+### Disable Optional Components
 
 Example:
 
+```yaml
 redis:
-
   enabled: false
+```
 
-Install only what's needed.
+Install only the components required for a specific environment.
 
-Hands-on Lab
+---
+
+# 🧪 Hands-on Lab
 
 Create a parent chart:
 
+```bash
 helm create ecommerce
+```
 
-Open:
+Open `Chart.yaml` and add:
 
-Chart.yaml
-
-Add:
-
+```yaml
 dependencies:
   - name: redis
     version: <current-version>
     repository: https://charts.bitnami.com/bitnami
+```
 
-Replace <current-version> with the latest compatible version from the repository.
+> Replace `<current-version>` with the latest compatible version from the Bitnami repository.
 
 Download dependencies:
 
+```bash
 helm dependency update
+```
 
 Verify:
 
+```text
 charts/
-
 └── redis-<version>.tgz
+```
 
-Render:
-
-helm template demo .
-
-Observe that Redis resources are included along with your application's resources.
-
-Common Interview Questions
-1. What is a subchart?
-
-A Helm chart used as a dependency of another chart.
-
-2. Where are dependencies defined?
-
-In the dependencies section of Chart.yaml.
-
-3. What does helm dependency update do?
-
-It downloads the required dependency charts and creates or updates Chart.lock.
-
-4. What is the purpose of Chart.lock?
-
-It locks dependency versions to ensure reproducible installations.
-
-5. Can a parent chart override a subchart's values?
-
-Yes. The parent chart can configure a subchart by providing values under the subchart's name in its values.yaml.
-
-6. Why use dependencies?
-
-To package and deploy multiple related applications with a single Helm release.
-
-Homework
-Create a parent chart named ecommerce.
-Add Redis as a dependency.
-Run:
-helm dependency update
-Inspect:
-charts/
-Chart.lock
-Override one Redis configuration value (for example, disabling authentication if supported by the chart) from the parent values.yaml.
 Render the chart:
-helm template ecommerce .
 
-and verify that both your application and the Redis resources are included.
+```bash
+helm template demo .
+```
+
+Verify that:
+
+- Redis resources are included.
+- Your application's resources are included.
+- Everything is rendered as a single deployment.
+
+---
+
+# 🎯 Interview Questions
+
+### 1. What is a subchart?
+
+> A subchart is a Helm Chart that is used as a dependency of another Helm Chart.
+
+---
+
+### 2. Where are dependencies defined?
+
+> Dependencies are defined in the `dependencies` section of `Chart.yaml`.
+
+---
+
+### 3. What does `helm dependency update` do?
+
+> It downloads all required dependency charts, stores them in the `charts/` directory, and creates or updates `Chart.lock`.
+
+---
+
+### 4. What is the purpose of `Chart.lock`?
+
+> `Chart.lock` locks dependency versions, ensuring reproducible and consistent installations across environments.
+
+---
+
+### 5. Can a parent chart override a subchart's values?
+
+> Yes. A parent chart can configure a subchart by defining values under the subchart's name in `values.yaml`.
+
+---
+
+### 6. Why use Helm dependencies?
+
+> Dependencies allow multiple related applications and services to be packaged and deployed together using a single Helm release.
+
+---
+
+# 📝 Homework
+
+Complete the following tasks:
+
+1. Create a parent chart named `ecommerce`.
+2. Add Redis as a dependency in `Chart.yaml`.
+3. Run:
+
+```bash
+helm dependency update
+```
+
+4. Inspect:
+
+```text
+charts/
+```
+
+and
+
+```text
+Chart.lock
+```
+
+5. Override a Redis configuration value (for example, disable authentication if supported by the chart) from the parent `values.yaml`.
+
+6. Render the chart:
+
+```bash
+helm template ecommerce .
+```
+
+Verify that:
+
+- Your application resources are included.
+- Redis resources are included.
+- The overridden Redis configuration is reflected in the rendered manifests.
+
+---
+
+# 📌 Key Takeaways
+
+- Subcharts are Helm Charts used as dependencies of a parent chart.
+- Dependencies are declared in the `dependencies` section of `Chart.yaml`.
+- `helm dependency update` downloads dependency charts and generates `Chart.lock`.
+- `Chart.lock` ensures reproducible deployments by locking dependency versions.
+- Parent charts can configure subcharts through their own `values.yaml`.
+- Dependencies can be enabled or disabled conditionally.
+- A single Helm release can deploy an entire application stack, simplifying management in production environments.
