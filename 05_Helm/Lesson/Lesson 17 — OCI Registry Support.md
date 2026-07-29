@@ -1,4 +1,3 @@
-````md id="o17v6r"
 # 🚀 Helm Tutorial — Lesson 17: OCI Registry Support
 
 > Learn how to store, distribute, and deploy Helm Charts using **OCI (Open Container Initiative) registries**. Modern DevOps teams increasingly use OCI registries instead of traditional Helm repositories because they provide better authentication, simplified management, and seamless integration with container workflows.
@@ -703,10 +702,4 @@ oci://
 - Helm supports pushing, pulling, installing, and upgrading charts directly from OCI registries.
 - OCI registries allow Docker images and Helm Charts to coexist in a single artifact repository.
 - OCI is the recommended approach for modern, enterprise-grade Helm chart distribution and CI/CD pipelines.
-
-````
-
-
-
-
 
