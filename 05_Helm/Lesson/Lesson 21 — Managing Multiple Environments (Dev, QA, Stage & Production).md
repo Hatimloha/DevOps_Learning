@@ -1,4 +1,3 @@
-````md id="m21e7q"
 # 🚀 Helm Tutorial — Lesson 21: Managing Multiple Environments (Dev, QA, Stage & Production)
 
 > Learn how to deploy the **same Helm Chart** across multiple environments by using separate values files. This approach eliminates duplicate templates, reduces configuration drift, and enables consistent deployments from development to production.

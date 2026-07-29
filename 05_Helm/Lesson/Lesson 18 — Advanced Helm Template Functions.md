@@ -1,4 +1,3 @@
-
 # 🚀 Helm Tutorial — Lesson 18: Advanced Helm Template Functions
 
 > Learn the advanced template functions that make Helm Charts **dynamic, reusable, configurable, and production-ready**. These functions are widely used in enterprise Helm Charts to build flexible deployments that adapt to different environments.

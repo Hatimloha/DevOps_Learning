@@ -1,4 +1,3 @@
-````md id="d19k4m"
 # 🚀 Helm Tutorial — Lesson 19: Helm Dependencies & Subcharts
 
 > Learn how to build modular Helm deployments using **dependencies and subcharts**. Instead of maintaining every component yourself, Helm allows you to reuse trusted charts such as PostgreSQL, Redis, and other services, making deployments faster, more reliable, and easier to maintain.

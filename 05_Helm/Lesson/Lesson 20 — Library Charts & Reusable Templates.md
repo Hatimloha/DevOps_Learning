@@ -1,4 +1,3 @@
-````md id="l20h8w"
 # 🚀 Helm Tutorial — Lesson 20: Library Charts & Reusable Templates
 
 > Learn how **Library Charts** help eliminate duplicate template code across multiple Helm Charts. They provide reusable helper templates for labels, annotations, naming, images, resources, and other shared logic, making large-scale Helm deployments easier to maintain.

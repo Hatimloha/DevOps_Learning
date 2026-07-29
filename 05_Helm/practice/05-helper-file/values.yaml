@@ -1,0 +1,28 @@
+deployment:
+  name: nginx
+  namespace: frontend
+  containerName: nginx
+
+image:
+  name: nginx
+  tag: "1.31"
+
+replicasCount: 3
+
+environment:
+  app: dev
+
+service:
+  name: nginx-svc
+  port: 80
+  targetPort: 80
+  protocol: TCP
+  type: LoadBalancer
+
+ingress:
+  enabled: false
+  name: ingress-nginx
+  ingressClassName: nginx
+  host: app.local
+  pathType: Prefix
+  port: 80

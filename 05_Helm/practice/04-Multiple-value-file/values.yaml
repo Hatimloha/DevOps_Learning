@@ -1,0 +1,21 @@
+deployment:
+  name: nginx
+  namespace: dev
+  containerName: nginx
+
+replicasCount: 3
+
+service:
+  name: nginx-svc
+  port: 80
+  targetPort: 80
+  protocol: TCP
+  type: LoadBalancer
+
+ingress:
+  enabled: false
+  name: ingress-nginx
+  ingressClassName: nginx
+  host: app.local
+  pathType: Prefix
+  port: 80

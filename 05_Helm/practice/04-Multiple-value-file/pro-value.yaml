@@ -1,0 +1,21 @@
+deployment:
+  name: nginx
+  namespace: production
+  containerName: nginx
+
+replicasCount: 10
+
+service:
+  name: nginx-svc
+  port: 443
+  targetPort: 443
+  protocol: TCP
+  type: ClusterIP
+
+ingress:
+  enabled: true
+  name: ingress-nginx
+  ingressClassName: nginx
+  host: app.public
+  pathType: Prefix
+  port: 443

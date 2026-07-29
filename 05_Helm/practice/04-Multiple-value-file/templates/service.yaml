@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.service.name }}
+  namespace: {{ .Values.deployment.namespace }}
+
+spec:
+  selector:
+    app: {{ .Values.deployment.containerName }}
+
+  type: {{ .Values.service.type }}
+
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: {{ .Values.service.port }}
+    protocol: {{ .Values.service.protocol }}
