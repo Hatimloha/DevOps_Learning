@@ -113,10 +113,10 @@ ecommerce/
 ├── Chart.yaml
 ├── values.yaml
 ├── charts/
-│
-├── postgresql/
-│
-└── redis/
+      │
+      ├── postgresql/
+      │
+      └── redis/
 ```
 
 The parent chart controls how all subcharts are deployed.
