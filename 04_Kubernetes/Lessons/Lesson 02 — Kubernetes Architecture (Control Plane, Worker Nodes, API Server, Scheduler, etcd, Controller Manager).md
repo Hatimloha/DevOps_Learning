@@ -251,14 +251,14 @@ kubectl apply -f nginx.yaml
       │               │
       ▼               ▼
 
-+-------------+   +-------------+
-| Worker Node |   | Worker Node |
-+-------------+   +-------------+
-| Kubelet     |   | Kubelet     |
-| Kube-Proxy  |   | Kube-Proxy  |
-| container Runtime  |   | container Runtime  |
-| Pods        |   | Pods        |
-+-------------+   +-------------+
++-------------------+ +--------------------+
+| Worker Node       | | Worker Node        |
++-------------------+ +--------------------+
+| Kubelet           | | Kubelet            |
+| Kube-Proxy        | | Kube-Proxy         |
+| container Runtime | | container Runtime  |
+| Pods              | | Pods               |
++-------------------+ +--------------------+
 ```
 
 ## Important Terms
