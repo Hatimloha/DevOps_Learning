@@ -1,16 +1,43 @@
-Linux Fundamentals — Day 5
-Linux Networking + SSH + HTTP
+# Linux Fundamentals — Day 5
+
+## Linux Networking, SSH & HTTP
 
 Networking is one of the most important Linux skills for DevOps.
 
-You should be able to answer:
+A key troubleshooting question you should be able to answer is:
 
-"My application is running, but why can't I access it?"
+> **"My application is running, but why can't I access it?"**
 
-1. Basic Networking Concepts
+This lesson covers Linux networking fundamentals, DNS, HTTP requests, ports, SSH, file transfers, and a practical troubleshooting workflow.
 
-A Linux server usually has:
+---
 
+# 📚 Topics Covered
+
+* Basic Networking Concepts
+* IP Addresses & Network Interfaces
+* Loopback & Localhost
+* Connectivity Testing
+* DNS
+* `curl` & HTTP Debugging
+* `wget`
+* Listening Ports
+* Common Network Ports
+* Port Testing
+* SSH
+* SSH Key Authentication
+* SCP File Transfers
+* SSH Configuration
+* Network Troubleshooting
+* Real DevOps Scenario
+
+---
+
+# 1. 🌐 Basic Networking Concepts
+
+A Linux server usually communicates through the following layers:
+
+```text
 Application
     ↓
 Port
@@ -20,210 +47,388 @@ IP Address
 Network Interface
     ↓
 Network
+```
 
 Example:
 
+```text
 192.168.1.10:8080
-192.168.1.10 → IP address
-8080 → port
-2. Check IP Address
+```
+
+Where:
+
+* `192.168.1.10` → IP Address
+* `8080` → Port
+
+Your application listens on a port, and the network interface makes it accessible through the network.
+
+---
+
+# 2. 🖥️ Check IP Address
 
 Use:
 
+```bash
 ip addr
+```
 
 Short version:
 
+```bash
 ip a
+```
 
-You'll see interfaces such as:
+You may see interfaces such as:
 
+```text
 lo
 eth0
 ens33
-3. Loopback
+```
+
+Each interface can have its own network configuration and IP address.
+
+---
+
+# 3. 🔄 Loopback & Localhost
+
+The address:
+
+```text
 127.0.0.1
+```
 
 means:
 
-This machine itself.
+> **This machine itself**
 
 You can also use:
 
+```text
 localhost
+```
 
 Example:
 
+```bash
 curl http://localhost:8080
-4. Check Network Interfaces
-ip link
+```
 
-You'll see whether interfaces are:
+This tests whether an application is accessible from the same machine.
 
-UP
-DOWN
-5. Test Connectivity — ping
-ping google.com
+---
 
-Stop with:
-
-Ctrl + C
-
-You can also ping an IP:
-
-ping 8.8.8.8
-Important
-
-If IP works but domain doesn't:
-
-ping 8.8.8.8     → works
-ping google.com  → fails
-
-The problem may be DNS.
-
-6. DNS Lookup
+# 4. 🔌 Check Network Interfaces
 
 Use:
 
+```bash
+ip link
+```
+
+This shows your network interfaces and their status.
+
+Common states:
+
+```text
+UP
+DOWN
+```
+
+---
+
+# 5. 📡 Test Connectivity with `ping`
+
+Test connectivity to a domain:
+
+```bash
+ping google.com
+```
+
+Stop the command with:
+
+```text
+Ctrl + C
+```
+
+You can also ping an IP address:
+
+```bash
+ping 8.8.8.8
+```
+
+## DNS Troubleshooting Example
+
+If this works:
+
+```bash
+ping 8.8.8.8
+```
+
+But this fails:
+
+```bash
+ping google.com
+```
+
+The problem may be related to:
+
+> **DNS resolution**
+
+---
+
+# 6. 🔍 DNS Lookup
+
+Use:
+
+```bash
 nslookup google.com
+```
 
-or:
+Or:
 
+```bash
 dig google.com
+```
 
-If dig isn't installed:
+If `dig` is not installed:
 
+```bash
 sudo apt install dnsutils
-7. curl 🔥
+```
 
-curl is one of the most important DevOps commands.
-
-Make HTTP request:
-
-curl https://example.com
-
-You can use it to:
-
-test APIs
-test services
-inspect HTTP responses
-download data
-debug applications
-8. See HTTP Headers
-curl -I https://example.com
+DNS converts domain names into IP addresses.
 
 Example:
 
+```text
+google.com
+      ↓
+DNS
+      ↓
+IP Address
+```
+
+---
+
+# 7. 🔥 `curl`
+
+`curl` is one of the most important commands for DevOps and production troubleshooting.
+
+Make an HTTP request:
+
+```bash
+curl https://example.com
+```
+
+You can use `curl` to:
+
+* Test APIs
+* Test services
+* Inspect HTTP responses
+* Download data
+* Debug applications
+
+---
+
+# 8. 📄 View HTTP Headers
+
+Use:
+
+```bash
+curl -I https://example.com
+```
+
+Example response:
+
+```text
 HTTP/2 200
 content-type: text/html
-9. Verbose curl
+```
 
-Very useful for debugging:
+The `200` status code usually means the request was successful.
 
+---
+
+# 9. 🔎 Verbose `curl`
+
+For detailed debugging:
+
+```bash
 curl -v https://example.com
+```
 
-You'll see:
+This can show information about:
 
-DNS connection
-TCP connection
-TLS
-HTTP request
-HTTP response
-10. Test an API
+* DNS resolution
+* TCP connection
+* TLS handshake
+* HTTP request
+* HTTP response
+
+This is extremely useful when debugging connectivity issues.
+
+---
+
+# 10. 🚀 Test an API
+
+Example:
+
+```bash
 curl https://api.example.com/users
+```
 
-POST example:
+## POST Request
 
+```bash
 curl -X POST https://api.example.com/users
+```
 
-With JSON:
+## POST Request with JSON
 
+```bash
 curl \
   -X POST \
   -H "Content-Type: application/json" \
   -d '{"name":"Hatim"}' \
   https://api.example.com/users
+```
 
-This becomes extremely useful when debugging backend services.
+This becomes especially useful when debugging backend services and APIs.
 
-11. wget
+---
 
-Download a file:
+# 11. 📥 `wget`
 
+Use `wget` to download files:
+
+```bash
 wget https://example.com/file.zip
+```
 
-curl and wget overlap, but:
+## `curl` vs `wget`
 
-curl → excellent for APIs/network debugging
-wget → commonly used for downloading files
-12. Check Listening Ports
+| Tool   | Best Use                   |
+| ------ | -------------------------- |
+| `curl` | APIs and network debugging |
+| `wget` | Downloading files          |
+
+Both tools can perform similar tasks, but they are commonly used for different purposes.
+
+---
+
+# 12. 🚪 Check Listening Ports
 
 Use:
 
+```bash
 ss -tuln
+```
 
-More details:
+For process information:
 
+```bash
 ss -tulnp
+```
 
 Example:
 
+```text
 LISTEN 0 128 0.0.0.0:8080
+```
 
-Your application is listening on port 8080.
+This means an application is listening on:
 
-13. Important Ports
+```text
+Port: 8080
+```
 
-Memorize these:
+---
 
-Port	Protocol/Service
-22	SSH
-53	DNS
-80	HTTP
-443	HTTPS
-3000	Common Node/dev server
-5432	PostgreSQL
-6379	Redis
-8080	Common application port
-14. Test a Port
+# 13. 🔢 Important Ports
 
-You can use:
+These ports are important to memorize:
 
+| Port   | Protocol / Service                  |
+| ------ | ----------------------------------- |
+| `22`   | SSH                                 |
+| `53`   | DNS                                 |
+| `80`   | HTTP                                |
+| `443`  | HTTPS                               |
+| `3000` | Common Node.js / Development Server |
+| `5432` | PostgreSQL                          |
+| `6379` | Redis                               |
+| `8080` | Common Application Port             |
+
+---
+
+# 14. 🧪 Test a Port
+
+Use `nc` (Netcat):
+
+```bash
 nc -zv localhost 8080
+```
 
 If successful:
 
+```text
 Connection succeeded
+```
 
-If not:
+If unsuccessful:
 
+```text
 Connection refused
-15. SSH 🔥🔥
+```
 
-SSH = Secure Shell.
+This helps determine whether a service is reachable on a specific port.
+
+---
+
+# 15. 🔐 SSH
+
+SSH stands for:
+
+> **Secure Shell**
 
 It allows you to remotely access another Linux machine.
 
-Basic:
+Basic syntax:
 
+```bash
 ssh user@server-ip
+```
 
 Example:
 
+```bash
 ssh ubuntu@192.168.1.50
-16. SSH Using Private Key
+```
 
-Common AWS EC2 example:
+---
 
+# 16. 🔑 SSH Using a Private Key
+
+A common AWS EC2 example:
+
+```bash
 ssh -i key.pem ubuntu@SERVER_IP
+```
 
-You may need:
+You may need to restrict the key permissions:
 
+```bash
 chmod 400 key.pem
-17. SSH Authentication
+```
 
-Typical flow:
+---
 
+# 17. 🔐 SSH Authentication
+
+Typical SSH connection flow:
+
+```text
 Your Computer
       |
       | SSH
@@ -235,146 +440,234 @@ Authentication
       |
       ↓
 Shell
+```
 
-Authentication can use:
+SSH authentication can use:
 
-password
-SSH keys
+* Password authentication
+* SSH keys
 
-For production, SSH keys are preferred.
+For production environments, **SSH key authentication is generally preferred**.
 
-18. SCP
+---
 
-Copy files over SSH.
+# 18. 📁 SCP — Secure Copy
 
-Local → Server:
+SCP allows you to copy files over SSH.
 
+## Local → Server
+
+```bash
 scp app.tar.gz ubuntu@server:/home/ubuntu/
+```
 
-Server → Local:
+## Server → Local
 
+```bash
 scp ubuntu@server:/home/ubuntu/app.log .
-19. SSH Config
+```
+
+---
+
+# 19. ⚙️ SSH Config
 
 Instead of repeatedly typing:
 
+```bash
 ssh -i key.pem ubuntu@192.168.1.50
+```
 
 You can configure:
 
+```text
 ~/.ssh/config
+```
 
 Example:
 
+```text
 Host myserver
     HostName 192.168.1.50
     User ubuntu
     IdentityFile ~/.ssh/key.pem
+```
 
-Then:
+Then simply connect using:
 
+```bash
 ssh myserver
+```
 
-Much easier.
+This makes managing multiple servers much easier.
 
-20. Network Troubleshooting Flow 🔥
+---
 
-Imagine your application isn't accessible.
+# 20. 🔥 Network Troubleshooting Flow
 
-Don't randomly restart everything.
+Imagine your application is not accessible.
 
-Check in order:
+❌ Don't randomly restart everything.
 
-1. Is the process running?
+Instead, troubleshoot systematically.
+
+## Step 1: Is the process running?
+
+```bash
 ps aux | grep app
-2. Is the port listening?
+```
+
+## Step 2: Is the port listening?
+
+```bash
 ss -tulnp
-3. Can localhost access it?
+```
+
+## Step 3: Can localhost access the application?
+
+```bash
 curl http://localhost:8080
-4. Is the server reachable?
+```
+
+## Step 4: Is the server reachable?
+
+```bash
 ping SERVER_IP
-5. Is DNS working?
+```
+
+## Step 5: Is DNS working?
+
+```bash
 dig example.com
-6. Is the remote port reachable?
+```
+
+## Step 6: Is the remote port reachable?
+
+```bash
 nc -zv SERVER_IP 8080
-7. Check firewall/security rules
+```
+
+## Step 7: Check firewall rules
 
 On Linux:
 
+```bash
 sudo ufw status
+```
 
-In AWS, also check:
+For AWS, also check:
 
-Security Group
+* Security Groups
+* Network configuration
+* Inbound rules
+* Outbound rules
 
-This troubleshooting mindset is much more valuable than memorizing commands.
+> **A systematic troubleshooting mindset is much more valuable than simply memorizing commands.**
 
-21. Real DevOps Scenario
+---
+
+# 21. 🚨 Real DevOps Scenario
 
 Your Node.js application says:
 
+```text
 Server running on port 3000
+```
 
-But browser cannot access it.
+But you cannot access it from your browser.
 
-Check:
+First, check the listening address:
 
+```bash
 ss -tulnp | grep 3000
+```
 
 Suppose you see:
 
+```text
 127.0.0.1:3000
+```
 
-This means the application is listening only on localhost.
+This means the application is listening only on:
 
-It may need to listen on:
+> **localhost**
 
+External machines cannot directly access it.
+
+The application may need to listen on:
+
+```text
 0.0.0.0:3000
+```
 
-Now the application can accept connections through the server's network interface, assuming firewall/security rules also permit it.
+This allows the application to accept connections through the server's network interface.
+
+```text
+Application
+      ↓
+0.0.0.0:3000
+      ↓
+Network Interface
+      ↓
+External Access
+```
+
+⚠️ Firewall and cloud security rules must also allow the connection.
 
 This is a very common production issue.
 
-22. Practice 🔥
-Task 1
+---
 
-Find your IP:
+# 22. 🧪 Practice Tasks
 
+## Task 1 — Find Your IP Address
+
+```bash
 ip a
-Task 2
+```
 
-Check DNS:
+## Task 2 — Check DNS
 
+```bash
 nslookup google.com
-Task 3
+```
 
-Check connectivity:
+## Task 3 — Test Connectivity
 
+```bash
 ping 8.8.8.8
-Task 4
+```
 
-Inspect HTTP:
+## Task 4 — Inspect HTTP Headers
 
+```bash
 curl -I https://example.com
-Task 5
+```
 
-Inspect the complete request:
+## Task 5 — Inspect the Complete Request
 
+```bash
 curl -v https://example.com
-Task 6
+```
 
-Check listening ports:
+## Task 6 — Check Listening Ports
 
+```bash
 ss -tulnp
-Task 7
+```
 
-Find your SSH configuration:
+## Task 7 — Check SSH Configuration
 
+```bash
 ls -la ~/.ssh
+```
 
-Don't modify or delete anything yet.
+> ⚠️ Do not modify or delete SSH files until you understand their purpose.
 
-Day 5 Commands to Master
+---
+
+# 🛠️ Day 5 Commands to Master
+
+```bash
 ip a
 ip link
 ping
@@ -386,14 +679,58 @@ ss
 nc
 ssh
 scp
-DevOps priority
+```
 
-I'd especially memorize:
+---
 
+# 🎯 DevOps Priority Commands
+
+The commands you should especially focus on are:
+
+```text
 curl
 ss
 ssh
 scp
 ip
+```
 
-You'll use these constantly with AWS, Docker, Kubernetes, CI/CD, and production servers.
+You will use these frequently when working with:
+
+* AWS
+* Linux Servers
+* Docker
+* Kubernetes
+* CI/CD Pipelines
+* APIs
+* Production Environments
+
+---
+
+# 💡 Key Takeaway
+
+When an application is not accessible, follow a logical troubleshooting process:
+
+```text
+Application Running?
+        ↓
+Port Listening?
+        ↓
+Localhost Working?
+        ↓
+Server Reachable?
+        ↓
+DNS Working?
+        ↓
+Port Reachable?
+        ↓
+Firewall / Security Rules?
+```
+
+> **DevOps is not about memorizing commands. It is about understanding how systems connect and knowing how to systematically find where something is failing.**
+
+---
+
+## 🚀 Next Step
+
+After completing these practice tasks, move on to **Linux process management and service management with `systemd`**, which connects directly to troubleshooting applications running on production servers.
