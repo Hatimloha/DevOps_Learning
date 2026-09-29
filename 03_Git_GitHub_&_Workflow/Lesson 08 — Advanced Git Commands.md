@@ -1,4 +1,4 @@
-# Lesson 8 — Git & GitHub Journey
+# Lesson 08 — Advanced Git Commands
 Advanced Git Commands
 
 Now you’ll learn the commands that:

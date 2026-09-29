@@ -1,4 +1,4 @@
-# Lesson 1 — Git & GitHub Journey
+# Lesson 01 — What is Git
 
 ## What is Git?
 Git is a version control system.

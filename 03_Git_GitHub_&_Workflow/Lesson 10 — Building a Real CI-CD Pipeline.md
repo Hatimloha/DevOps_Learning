@@ -1,4 +1,4 @@
-# Lesson 10 — Git & GitHub Journey
+# Lesson 10 — Building a Real CI-CD Pipeline
 
 # Building a Real CI/CD Pipeline with GitHub Actions & Docker
 

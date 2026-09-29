@@ -1,4 +1,4 @@
-# Lesson 7 — Git & GitHub Journey
+# Lesson 07 — GitHub Actions & CI-CD Basics
 GitHub Actions & CI/CD Basics
 
 Now you enter real DevOps workflow.

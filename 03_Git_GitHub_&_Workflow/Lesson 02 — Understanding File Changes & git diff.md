@@ -1,4 +1,4 @@
-# Lesson 2 — Git & GitHub Journey
+# Lesson 02 — Understanding File Changes & git diff
 Understanding File Changes in Git
 
 ## Today you’ll learn:

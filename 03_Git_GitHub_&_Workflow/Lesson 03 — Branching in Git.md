@@ -1,4 +1,4 @@
-# Lesson 3 — Git & GitHub Journey
+# Lesson 03 — Branching in Git
 Branching in Git
 
 This is one of the MOST important Git concepts.

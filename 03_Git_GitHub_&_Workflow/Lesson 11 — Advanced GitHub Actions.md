@@ -1,4 +1,4 @@
-# Lesson 11 — Git & GitHub Journey
+# Lesson 11 — Advanced GitHub Actions
 
 # Advanced GitHub Actions
 

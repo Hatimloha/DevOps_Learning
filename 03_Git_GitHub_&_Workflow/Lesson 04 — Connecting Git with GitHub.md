@@ -1,4 +1,4 @@
-# Lesson 4 — Git & GitHub Journey
+# Lesson 04 — Connecting Git with GitHub
 Connecting Git with GitHub
 
 Now you’ll learn:

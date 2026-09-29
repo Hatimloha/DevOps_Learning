@@ -1,4 +1,4 @@
-# Lesson 5 — Git & GitHub Journey
+# Lesson 05 — Pull Requests & Team Workflow
 Pull Requests (PR) & Team Workflow
 
 Now you move from:

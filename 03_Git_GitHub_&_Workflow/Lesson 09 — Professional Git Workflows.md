@@ -1,4 +1,4 @@
-# Lesson 9 — Git & GitHub Journey
+# Lesson 09 — Professional Git Workflows
 
 # Professional Git Workflows (GitFlow vs Trunk-Based Development)
 

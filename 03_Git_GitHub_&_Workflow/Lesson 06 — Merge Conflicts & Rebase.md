@@ -1,4 +1,4 @@
-# Lesson 6 — Git & GitHub Journey
+# Lesson 06 — Merge Conflicts & Rebase
 Merge Conflicts & Rebase Basics
 
 This lesson is very important because:
