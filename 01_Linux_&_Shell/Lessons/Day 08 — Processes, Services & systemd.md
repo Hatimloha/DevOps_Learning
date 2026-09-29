@@ -1,4 +1,4 @@
-# Linux Fundamentals — Day 8
+# Day 08 — Processes, Services & systemd
 
 ## Processes, Services & systemd
 

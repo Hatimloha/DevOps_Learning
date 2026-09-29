@@ -1,4 +1,4 @@
-# Linux Fundamentals — Day 9
+# Day 09 — Shell Environment & Bash Internals
 
 ## Shell Environment & Bash Internals
 

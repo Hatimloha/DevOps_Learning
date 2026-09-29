@@ -1,180 +1,89 @@
-# Prerequisite
+# Kubernetes
+
+### Prerequisites
 - Linux Fundamentals ✅
 - Shell Scripting ✅
 - Docker Deep Dive ✅
 - Git & GitHub Workflow ✅
-- Kubernetes (Next Step) 🚀
-> This is the ideal order because Kubernetes builds heavily on Linux, Containers, Docker concepts, Networking, and Git workflows.
 
-```bash
-kubernetes-zero-to-advanced/
-│
-├── 01-fundamentals/
-├── 02-cluster-architecture/
-├── 03-pods/
-├── 04-replication/
-├── 05-services/
-├── 06-deployments/
-├── 07-configmaps-secrets/
-├── 08-storage/
-├── 09-networking/
-├── 10-ingress/
-├── 11-helm/
-├── 12-monitoring/
-├── 13-security/
-├── 14-ci-cd/
-├── 15-production/
-└── projects/
+> Kubernetes builds heavily on Linux, Containers, Docker, Networking, and Git workflows — all covered in earlier sections.
+
+---
+
+## Repository Structure
+
+```
+04_Kubernetes/
+├── Lessons/           # 27 structured lessons
+├── k8s-manifest/      # Practice YAML manifests
+└── k8s-projects/      # 3 hands-on projects
 ```
 
-## Kubernetes Learning Roadmap
+---
 
-### Phase 1 — Kubernetes Foundations
-```
-Lesson 1 — Why Kubernetes? Container Orchestration Fundamentals
+## Lessons (27)
 
-Lesson 2 — Kubernetes Architecture
+### Phase 1 — Foundations
+| # | Lesson |
+|---|--------|
+| 01 | Why Kubernetes? Container Orchestration Fundamentals |
+| 02 | Kubernetes Architecture (Control Plane, Worker Nodes, API Server, Scheduler, etcd, Controller Manager) |
+| 03 | Setting Up Kubernetes Locally (kubectl, Minikube, Kind, Cluster Creation, First Commands) |
+| 04 | Pods Deep Dive (Core Kubernetes Unit) |
 
-Lesson 3 — Setting Up Local Cluster
-- Minikube
-- Kind
-- kubectl
+### Phase 2 — Workloads & Scaling
+| # | Lesson |
+|---|--------|
+| 05 | ReplicaSets Deep Dive (Self-Healing, Scaling, Labels, Selectors) |
+| 06 | Deployments Deep Dive (Rolling Updates, Rollbacks, Revision History, Zero-Downtime Deployments) |
+| 07 | Services in Kubernetes (ClusterIP, NodePort, LoadBalancer) |
+| 15 | Kubernetes Deployment Strategies (Rolling Updates, Rollbacks, Recreate, Canary Concepts) |
+| 16 | StatefulSets (Persistent Identity, Ordered Deployment, Databases in Kubernetes) |
+| 17 | DaemonSets (One Pod Per Node) |
+| 18 | Jobs & CronJobs (Batch Processing & Scheduled Tasks) |
 
-Lesson 4 — Understanding Pods
+### Phase 3 — Configuration & Storage
+| # | Lesson |
+|---|--------|
+| 08 | ConfigMaps & Secrets (Configuration Management in Kubernetes) |
+| 09 | Kubernetes Storage (Volumes, PV, PVC, StorageClass) |
+| 23 | ConfigMaps & Secrets (External Configuration & Secure Data) |
 
-Lesson 5 — Multi Container Pods
-```
+### Phase 4 — Networking
+| # | Lesson |
+|---|--------|
+| 10 | Kubernetes Networking Deep Dive (DNS, Service Discovery, Pod Communication) |
+| 11 | Ingress Deep Dive (Ingress Controller, Routing, Domains, HTTPS) |
+| 25 | Kubernetes Networking Deep Dive |
 
-### Phase 2 — Workload Management
-```
-Lesson 6 — ReplicaSets
+### Phase 5 — Security
+| # | Lesson |
+|---|--------|
+| 19 | RBAC (Role-Based Access Control), Service Accounts & Security Fundamentals |
+| 20 | Network Policies (Pod-to-Pod Security, Traffic Control, Zero Trust Networking) |
+| 24 | Kubernetes Security Deep Dive (Production Security) |
 
-Lesson 7 — Deployments
+### Phase 6 — Operations & Observability
+| # | Lesson |
+|---|--------|
+| 12 | Health Checks & Probes (Liveness, Readiness, Startup Probes) |
+| 13 | Resource Requests & Limits (CPU, Memory, OOMKilled) |
+| 14 | Namespaces (Logical Isolation, Multi-Tenancy, Resource Separation) |
+| 21 | Kubernetes Scheduling (Where Pods Run) |
+| 22 | Kubernetes Logging & Monitoring |
 
-Lesson 8 — Rolling Updates
+### Phase 7 — Advanced Topics
+| # | Lesson |
+|---|--------|
+| 26 | Custom Resource Definitions (CRDs), Operators & Kubernetes API Extension |
+| 27 | Kubernetes Backup, Restore & Disaster Recovery |
 
-Lesson 9 — Rollbacks
+---
 
-Lesson 10 — Namespaces
-```
+## Projects (3)
 
-
-### Phase 3 — Networking
-```
-Lesson 11 — Services
-
-Lesson 12 — ClusterIP
-
-Lesson 13 — NodePort
-
-Lesson 14 — LoadBalancer
-
-Lesson 15 — DNS
-
-Lesson 16 — Ingress
-```
-
-### Phase 4 — Configuration
-```
-Lesson 17 — ConfigMaps
-
-Lesson 18 — Secrets
-
-Lesson 19 — Resource Limits
-
-Lesson 20 — Health Checks
-
-Liveness Probe
-
-Readiness Probe
-
-Startup Probe
-```
-
-### Phase 5 — Storage
-```
-Lesson 21 — Volumes
-
-Lesson 22 — Persistent Volumes
-
-Lesson 23 — Persistent Volume Claims
-
-Lesson 24 — Storage Classes
-```
-
-### Phase 6 — Scaling
-```
-Lesson 25 — Manual Scaling
-
-Lesson 26 — Horizontal Pod Autoscaler
-
-Lesson 27 — Cluster Autoscaler
-```
-
-### Phase 7 — Advanced Scheduling
-```
-Lesson 28 — Labels
-
-Lesson 29 — Selectors
-
-Lesson 30 — Taints & Tolerations
-
-Lesson 31 — Node Affinity
-
-Lesson 32 — Pod Affinity
-```
-
-### Phase 8 — Security
-```
-Lesson 33 — Service Accounts
-
-Lesson 34 — RBAC
-
-Lesson 35 — Network Policies
-
-Lesson 36 — Pod Security
-```
-
-
-### Phase 9 — Production Kubernetes
-```
-Lesson 37 — Helm
-
-Lesson 38 — Metrics Server
-
-Lesson 39 — Prometheus
-
-Lesson 40 — Grafana
-
-Lesson 41 — Logging
-
-Lesson 42 — Backup & Restore
-```
-
-### Phase 10 — Kubernetes for DevOps Engineers
-```
-Lesson 43 — CI/CD Pipelines
-
-Lesson 44 — GitOps
-
-Lesson 45 — Argo CD
-
-Lesson 46 — Kubernetes Troubleshooting
-
-Lesson 47 — Cost Optimization
-
-Lesson 48 — Production Best Practices
-```
-
-### Phase 11 — Real Projects
-```
-Project 1 — Nginx Application
-
-Project 2 — Node.js + MongoDB
-
-Project 3 — Three Tier Application
-
-Project 4 — Microservices Application
-
-Project 5 — Production Kubernetes Cluster
-```
+| # | Project | Focus |
+|---|---------|-------|
+| 1 | Static Website Deployment | Deploy a static site with Deployments, Services, Ingress |
+| 2 | Node.js + MongoDB (Real Application) | Multi-container app with ConfigMaps, Secrets, Persistent Storage |
+| 3 | Three-Tier E-Commerce Application | Autoscaling, Ingress, Jobs, Resource Quotas, RBAC, LimitRanges |

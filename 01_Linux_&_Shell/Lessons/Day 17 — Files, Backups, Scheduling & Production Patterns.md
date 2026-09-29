@@ -1,4 +1,4 @@
-# Day 17 — Bash Automation: Files, Backups, Scheduling & Production Patterns
+# Day 17 — Files, Backups, Scheduling & Production Patterns
 
 Today we'll take the automation from Day 16 one step further.
 

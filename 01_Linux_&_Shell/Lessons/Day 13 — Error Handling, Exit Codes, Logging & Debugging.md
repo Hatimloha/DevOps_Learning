@@ -1,4 +1,4 @@
-# 🐚 Linux & Bash — Day 13
+# Day 13 — Error Handling, Exit Codes, Logging & Debugging
 
 ## Bash Scripting — Error Handling, Exit Codes, Logging & Debugging
 

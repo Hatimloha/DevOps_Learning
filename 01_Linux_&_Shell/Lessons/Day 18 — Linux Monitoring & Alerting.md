@@ -1,4 +1,4 @@
-# Day 18 — Bash + Linux Monitoring & Alerting
+# Day 18 — Linux Monitoring & Alerting
 
 Today we move from **automation → monitoring**.
 

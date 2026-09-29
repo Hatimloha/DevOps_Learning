@@ -1,4 +1,4 @@
-# Linux Fundamentals — Day 6
+# Day 06 — Users, Groups & Sudo
 
 ## Users, Groups & Sudo
 

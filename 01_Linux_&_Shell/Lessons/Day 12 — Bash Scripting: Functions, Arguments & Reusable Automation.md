@@ -1,4 +1,4 @@
-# 🐚 Linux & Bash — Day 12
+# Day 12 — Bash Scripting: Functions, Arguments & Reusable Automation
 
 ## Bash Scripting — Functions, Arguments & Reusable Automation
 

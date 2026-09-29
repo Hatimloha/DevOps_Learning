@@ -1,4 +1,4 @@
-# 🐚 Linux & Bash — Day 11
+# Day 11 — Bash Scripting: Loops & Arrays
 
 ## Bash Scripting: Loops & Arrays
 

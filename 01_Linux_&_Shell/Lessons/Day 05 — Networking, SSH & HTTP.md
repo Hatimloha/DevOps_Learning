@@ -1,4 +1,4 @@
-# Linux Fundamentals — Day 5
+# Day 05 — Networking, SSH & HTTP
 
 ## Linux Networking, SSH & HTTP
 

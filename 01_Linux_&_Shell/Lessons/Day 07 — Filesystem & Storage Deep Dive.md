@@ -1,4 +1,4 @@
-# Linux Fundamentals — Day 7
+# Day 07 — Filesystem & Storage Deep Dive
 
 ## Filesystem & Storage Deep Dive
 

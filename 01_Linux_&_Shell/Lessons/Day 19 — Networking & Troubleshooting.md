@@ -1,4 +1,4 @@
-# Day 19 — Bash + Linux Networking & Troubleshooting
+# Day 19 — Networking & Troubleshooting
 
 Today we move from **monitoring** into **automated troubleshooting**.
 

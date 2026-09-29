@@ -1,4 +1,4 @@
-# Day 15 — Bash Advanced Text Processing & Regular Expressions
+# Day 15 — Advanced Text Processing & Regular Expressions
 
 A practical DevOps study guide covering regular expressions, advanced `grep`, `awk`, `sed`, log parsing, and production-style Bash pipelines.
 

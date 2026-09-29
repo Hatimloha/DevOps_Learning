@@ -43,8 +43,8 @@ No polished tutorials. Just real learning, real mistakes, and real progress.
 ```
 DevOps_Learning/
 ├── 01_Linux_&_Shell/
-│   └── Learning/          # 19 day-structured lessons + Shell Guide
-├── 02_docker/
+│   └── Lessons/           # 19 day-structured lessons + Shell Guide
+├── 02_Docker/
 │   └── (16 lessons)       # Deep dive from fundamentals to advanced
 ├── 03_Git_GitHub_&_Workflow/
 │   └── (11 lessons)       # Complete Git & GitHub workflow
@@ -53,7 +53,7 @@ DevOps_Learning/
 │   ├── k8s-manifest/      # Practice manifests
 │   └── k8s-projects/      # Hands-on projects
 ├── 05_Helm/
-│   ├── Lesson/            # 22 lessons
+│   ├── Lessons/           # 22 lessons
 │   └── practice/          # Practice charts
 └── README.md
 ```

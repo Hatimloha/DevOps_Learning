@@ -1,4 +1,4 @@
-# 🐚 Bash Scripting — Day 10
+# Day 10 — Bash Scripting: Variables, Input & Conditions
 
 ## Scripts, Variables, Input & Conditions
 
