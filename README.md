@@ -1,89 +1,101 @@
-# 👋 Hi Everyone — I'm Learning DevOps in Public
+# Hi Everyone — I'm Learning DevOps in Public
 
-I'm a **Network Engineer with 3+ years of experience** transitioning into **DevOps & Cloud Engineering**.  
+I'm a **Network Engineer with 3+ years of experience** transitioning into **DevOps & Cloud Engineering**.
 Every day I study, build, and document what I learn — right here on this repo.
 
 No polished tutorials. Just real learning, real mistakes, and real progress.
 
-> 🔗 **Daily blogs on Hashnode** → [Hashnode](https://hashnode.com/@hatimloha)
-> 💼 **LinkedIn updates** → [Linkedin](https://www.linkedin.com/in/hatimloha)
+> **Daily blogs on Hashnode** → [Hashnode](https://hashnode.com/@hatimloha)
+> **LinkedIn updates** → [Linkedin](https://www.linkedin.com/in/hatimloha)
 
 ---
 
-## 👨‍💻 About Me
+## About Me
 
-- 🏢 3+ years in Network Engineering — Fortinet, Hyper-V, Windows/Linux Servers
-- ☁️ Transitioning into **DevOps, Cloud & Automation**
-- 🛠️ Currently building with Docker, Kubernetes, AWS, CI/CD & more
-- 📖 Writing about everything I learn — daily posts on Hashnode & LinkedIn
-- 🤝 Open to **DevOps-focused roles and collaborations**
-
----
-
-## 🗺️ My Learning Roadmap
-
-| # | Topic | Status | Blog |
-|---|-------|--------|------|
-| 01 | 🐧 Linux & Bash Scripting | 🟡 In Progress | [Read →](https://github.com/Hatimloha/DevOps_Learning/tree/main/01_Linux_%26_Shell) |
-| 02 | 🌿 Git & GitHub | ⬜ Up Next | — |
-| 03 | 🐳 Docker | 🟡 In Progress | [Read →](https://github.com/Hatimloha/DevOps_Learning/tree/main/02_docker) |
-| 04 | ☁️ AWS Core (EC2, S3, IAM, VPC, ECR, EKS) | ⬜ Upcoming | — |
-| 05 | ⚙️ GitHub Actions (CI/CD) | ⬜ Upcoming | — |
-| 06 | 🔧 Jenkins | ⬜ Upcoming | — |
-| 07 | ☸️ Kubernetes | ⬜ Upcoming | — |
-| 08 | 🏗️ Terraform | ⬜ Upcoming | — |
-| 09 | ⛵ Helm | ⬜ Upcoming | — |
-| 10 | 🔄 ArgoCD | ⬜ Upcoming | — |
-| 11 | 📊 Prometheus & Grafana | ⬜ Upcoming | — |
-
-> ⬜ Upcoming &nbsp;&nbsp; 🟡 In Progress &nbsp;&nbsp; ✅ Done
+- 3+ years in Network Engineering — Fortinet, Hyper-V, Windows/Linux Servers
+- Transitioning into **DevOps, Cloud & Automation**
+- Currently building with Docker, Kubernetes, AWS, CI/CD & more
+- Writing about everything I learn — daily posts on Hashnode & LinkedIn
+- Open to **DevOps-focused roles and collaborations**
 
 ---
 
-## 📁 Repo Structure
+## My Learning Roadmap
+
+| # | Topic | Status | Lessons |
+|---|-------|--------|---------|
+| 01 | Linux & Shell Scripting | Done | 19 lessons — Basics through Bash automation, monitoring & networking |
+| 02 | Docker | Done | 16 lessons — From why Docker exists to DinD |
+| 03 | Git & GitHub | Done | 11 lessons — Complete Git workflow |
+| 04 | Kubernetes | Done | 27 lessons — Architecture through CRDs, backup & DR |
+| 05 | Helm | Done | 22 lessons — Chart development through multi-environment deployments |
+| 06 | AWS Core (EC2, S3, IAM, VPC, ECR, EKS) | Upcoming | — |
+| 07 | GitHub Actions (CI/CD) | Upcoming | — |
+| 08 | Jenkins | Upcoming | — |
+| 09 | Terraform | Upcoming | — |
+| 10 | ArgoCD | Upcoming | — |
+| 11 | Prometheus & Grafana | Upcoming | — |
+
+---
+
+## Repo Structure
 
 ```
-📦 devops-learning-journey
-├── 01_Linux_&_Bash_Scripting/
-│   ├── notes.md
-│   ├── scripts/
-│   └── README.md
-├── 02_Git_&_GitHub/
-├── 03_Docker/
-├── 04_AWS_Core/
-├── 05_GitHub_Actions/
-├── 06_Jenkins/
-├── 07_Kubernetes/
-├── 08_Terraform/
-├── 09_Helm/
-├── 10_ArgoCD/
-└── 11_Prometheus_&_Grafana/
+DevOps_Learning/
+├── 01_Linux_&_Shell/
+│   └── Learning/          # 19 day-structured lessons + Shell Guide
+├── 02_docker/
+│   └── (16 lessons)       # Deep dive from fundamentals to advanced
+├── 03_Git_GitHub_&_Workflow/
+│   └── (11 lessons)       # Complete Git & GitHub workflow
+├── 04_Kubernetes/
+│   ├── Lessons/           # 27 lessons
+│   ├── k8s-manifest/      # Practice manifests
+│   └── k8s-projects/      # Hands-on projects
+├── 05_Helm/
+│   ├── Lesson/            # 22 lessons
+│   └── practice/          # Practice charts
+└── README.md
 ```
-
-Each folder contains:
-- 📝 `notes.md` — What I learned, explained simply
-- 💻 `scripts/` or `configs/` — Hands-on files I built
-- 📖 `README.md` — Summary + link to the full blog post
 
 ---
 
-## 🛠️ My Current Stack
+## What I've Learned So Far
 
-**Infrastructure & Networking**  
+### Linux & Shell (19 Days)
+Covers Linux fundamentals (navigation, permissions, networking, processes, filesystem, systemd) through advanced Bash scripting (variables, conditions, loops, arrays, functions, error handling, text processing, regex, automation, monitoring, and troubleshooting).
+
+### Docker (16 Lessons)
+Deep dive from why containers exist through images, volumes, networking, Compose, Dockerfiles, internals, security, optimization, registry, logging, BuildKit, rootless Docker, API, and Docker-in-Docker.
+
+### Git & GitHub (11 Lessons)
+Complete Git workflow from basics through branching, merging, rebasing, conflict resolution, and GitHub collaboration.
+
+### Kubernetes (27 Lessons)
+Architecture, Pods, ReplicaSets, Deployments, Services, ConfigMaps, Secrets, Storage, Networking, Ingress, Health Checks, Resource Management, Namespaces, StatefulSets, DaemonSets, Jobs, RBAC, Network Policies, Scheduling, Logging, Security, CRDs, and Disaster Recovery.
+
+### Helm (22 Lessons)
+Chart structure, template engine, values, conditionals, loops, named templates, ConfigMaps/Secrets, multi-environment deployments, dependencies, upgrade/rollback management, hooks, testing, packaging, repositories, OCI support, and library charts.
+
+---
+
+## My Current Stack
+
+**Infrastructure & Networking**
 `Fortinet` `Hyper-V` `Windows Server` `Linux` `TCP/IP` `VPN`
 
-**DevOps & Cloud (Building)**  
+**DevOps & Cloud (Building)**
 `Docker` `Kubernetes` `AWS` `Terraform` `Jenkins` `GitHub Actions` `ArgoCD` `Helm`
 
-**Monitoring**  
+**Monitoring**
 `Prometheus` `Grafana`
 
-**Scripting & Dev**  
+**Scripting & Dev**
 `Bash` `Shell Scripting` `Git` `MERN Stack`
 
 ---
 
-## 📬 Let's Connect
+## Let's Connect
 
 If you're on a similar journey or want to collaborate — let's connect.
 
